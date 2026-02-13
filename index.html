@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amaranth Style - Enterprise Payroll System</title>
+    
+    <!-- 1. Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 2. Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- 3. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7', 
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e', 
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Print Optimization for A4 Portrait */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 210mm;
+                height: 297mm; /* Full A4 Height */
+                margin: 0;
+                padding: 15mm; /* Adjusted Margin */
+                background: white;
+                box-shadow: none;
+                border: none;
+                z-index: 9999;
+                display: block !important;
+            }
+            /* Hide UI elements */
+            .no-print, button, header, aside, #login-section, #payslip-placeholder { 
+                display: none !important; 
+            }
+            
+            /* Enhanced Grid for Print Balance */
+            .print-grid {
+                display: flex !important;
+                width: 100% !important;
+                gap: 10mm !important; /* Space between tables */
+                justify-content: space-between !important;
+            }
+            .print-col {
+                flex: 1 !important;
+                width: 48% !important; /* Force half width */
+            }
+            
+            /* Table Styling Fixes for Print */
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th, td { border: 1px solid #000 !important; } /* Sharp borders */
+            .bg-gray-50, .bg-blue-50, .bg-red-50 { background-color: #f1f5f9 !important; } /* Light gray for print */
+        }
+        
+        .manual-override {
+            background-color: #fffbeb !important;
+            border-color: #f59e0b !important;
+            font-weight: bold;
+        }
+        
+        .payslip-table th, .payslip-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+        }
+        .payslip-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased overflow-hidden h-screen flex flex-col">
+
+    <!-- 1. LOGIN SECTION -->
+    <div id="login-section" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-10 transform transition-all hover:scale-105 duration-300">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white mb-6 shadow-lg">
+                    <i class="fa-solid fa-layer-group text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">AMARANTH<span class="text-brand-500">.</span></h1>
+                <p class="text-xs text-gray-500 mt-2 tracking-widest uppercase">Premium HR Solution</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Access Key</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-lock text-gray-400"></i></div>
+                        <input type="password" id="password" required class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-sm" placeholder="Password">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-brand-600 text-white font-bold rounded-lg shadow-lg hover:bg-brand-700 hover:shadow-xl transition-all">System Login</button>
+            </form>
+            <p class="mt-6 text-center text-xs text-gray-400">Default: <b>admin1234</b></p>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP LAYOUT -->
+    <div id="app-layout" class="flex flex-1 overflow-hidden hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-72 bg-slate-900 text-slate-300 flex flex-col no-print shadow-xl z-20">
+            <div class="h-16 flex items-center px-6 bg-slate-900 border-b border-slate-800"><i class="fa-solid fa-shapes text-brand-500 mr-3 text-xl"></i><span class="font-bold text-white text-xl tracking-wide">AMARANTH</span></div>
+            <div class="p-4"><div class="bg-slate-800 rounded-lg p-3 flex items-center mb-2"><div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold shadow">HR</div><div class="ml-3"><p class="text-sm font-bold text-white">최고관리자</p><p class="text-xs text-slate-400">인사총무팀</p></div></div></div>
+            <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-2">Management</p>
+                <a href="#" onclick="router('dashboard')" id="nav-dashboard" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-chart-pie w-8 text-center mr-1"></i> 경영 대시보드</a>
+                <a href="#" onclick="router('employee')" id="nav-employee" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-users w-8 text-center mr-1"></i> 인사 정보 관리</a>
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6">Payroll Service</p>
+                <a href="#" onclick="router('payroll')" id="nav-payroll" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-calculator w-8 text-center mr-1"></i> 급여 계산/입력</a>
+                <a href="#" onclick="router('retirement')" id="nav-retirement" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-piggy-bank w-8 text-center mr-1"></i> 퇴직금 정산</a>
+                <a href="#" onclick="router('history')" id="nav-history" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-file-invoice w-8 text-center mr-1"></i> 급여 대장</a>
+                <a href="#" onclick="router('payslip')" id="nav-payslip" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-receipt w-8 text-center mr-1"></i> 급여 명세서</a>
+            </nav>
+            <div class="p-4 border-t border-slate-800"><button onclick="logout()" class="w-full flex items-center justify-center px-4 py-2 border border-slate-700 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> 로그아웃</button></div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden relative">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10 no-print">
+                <div class="flex items-center"><h2 id="page-title" class="text-xl font-bold text-gray-800 tracking-tight">대시보드</h2><span class="ml-4 px-2 py-0.5 rounded text-xs font-medium bg-brand-50 text-brand-600 border border-brand-100">Enterprise Edition</span></div>
+                <div class="flex items-center space-x-3">
+                    <div class="text-right mr-2 hidden sm:block"><p class="text-xs text-gray-400">Current Date</p><p class="text-sm font-bold text-gray-700" id="current-date">2026.01.07</p></div>
+                    <div class="h-8 w-px bg-gray-200 mx-2"></div>
+                    <button onclick="openRateModal()" class="flex items-center justify-center w-9 h-9 rounded-full bg-gray-50 text-gray-500 hover:bg-brand-50 hover:text-brand-600 transition-colors border border-gray-200 shadow-sm" title="환경설정"><i class="fa-solid fa-gear"></i></button>
+                </div>
+            </header>
+
+            <div id="content-area" class="flex-1 overflow-auto p-8 relative scroll-smooth">
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="space-y-6 pb-10">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Total Headcount</p><h3 class="text-3xl font-bold text-gray-800 mt-1" id="dash-total-emp">0</h3></div><div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-users text-lg"></i></div></div></div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Est. Monthly Cost</p><h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-total-cost">0 원</h3></div><div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-money-bill-trend-up text-lg"></i></div></div></div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Payroll Status</p><h3 class="text-3xl font-bold text-gray-800 mt-1" id="dash-processed">0%</h3></div><div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-list-check text-lg"></i></div></div><div class="w-full bg-gray-100 rounded-full h-1.5 mt-2"><div id="dash-progress-bar-sm" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div></div></div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Payment D-Day</p><h3 class="text-3xl font-bold text-brand-600 mt-1" id="dash-d-day">D-?</h3></div><div class="p-2.5 bg-brand-50 text-brand-600 rounded-lg"><i class="fa-regular fa-calendar-check text-lg"></i></div></div><div class="flex items-center text-xs"><span class="text-gray-400">지급예정일: 매월 <span id="dash-pay-day">25</span>일</span></div></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">월별 인건비 추이 (최근 6개월)</h3><div class="relative h-72 w-full"><canvas id="chart-trend"></canvas></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">부서별 인원 분포</h3><div class="relative h-48 w-full flex justify-center"><canvas id="chart-dept"></canvas></div><div class="mt-6 space-y-3" id="dash-dept-legend"></div></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">월별 평균 초과근무 시간 추이 (시간)</h3><div class="relative h-64 w-full"><canvas id="chart-overtime"></canvas></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">이번 달 급여 구성비 (추계)</h3><div class="relative h-64 w-full flex justify-center"><canvas id="chart-composition"></canvas></div></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: EMPLOYEE -->
+                <div id="view-employee" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white"><div class="flex items-center gap-3"><h3 class="text-lg font-bold text-gray-900">인사 정보 관리</h3><span class="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">외부 사원 자동 동기화</span></div><button onclick="openEmployeeModal()" class="px-4 py-2.5 bg-brand-600 text-white text-sm font-bold rounded-lg shadow-lg hover:bg-brand-700 flex items-center"><i class="fa-solid fa-user-plus mr-2"></i> 사원 등록</button></div>
+                        <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-100"><thead class="bg-gray-50"><tr><th class="px-8 py-4 text-left text-xs font-bold text-gray-500 uppercase">구분/이름</th><th class="px-8 py-4 text-left text-xs font-bold text-gray-500 uppercase">부서/직급</th><th class="px-8 py-4 text-left text-xs font-bold text-gray-500 uppercase">입사일</th><th class="px-8 py-4 text-right text-xs font-bold text-gray-500 uppercase">급여조건 (Smart Display)</th><th class="px-8 py-4 text-center text-xs font-bold text-gray-500 uppercase">상태</th><th class="px-8 py-4 text-right text-xs font-bold text-gray-500 uppercase">관리</th></tr></thead><tbody id="employee-list-body" class="bg-white divide-y divide-gray-100"></tbody></table></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: PAYROLL -->
+                <div id="view-payroll" class="hidden space-y-6 h-full flex flex-col pb-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                        <div class="lg:col-span-4 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden">
+                            <div class="p-5 border-b border-gray-100 bg-gray-50"><label class="block text-xs font-bold text-gray-500 uppercase mb-2">귀속 년월 선택</label><div class="relative"><input type="month" id="payroll-month" onchange="loadPayrollStatus()" class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 text-sm py-2.5"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-calendar text-gray-400"></i></div></div></div>
+                            <div class="p-2 bg-yellow-50 border-b border-yellow-100 flex justify-between items-center px-4"><span class="text-xs text-yellow-800 font-medium"><i class="fa-solid fa-circle-info mr-1"></i>대상자 목록</span><span class="text-xs text-yellow-800 font-bold" id="payroll-count">0명</span></div>
+                            <div class="flex-1 overflow-y-auto p-3"><ul id="payroll-emp-list" class="space-y-2"></ul></div>
+                        </div>
+                        <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden relative">
+                            <div id="payroll-placeholder" class="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center text-gray-400"><div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner"><i class="fa-solid fa-calculator text-3xl text-slate-300"></i></div><p class="text-lg font-bold text-gray-700">급여 작업을 시작하려면</p><p class="text-sm mt-1 text-gray-500">좌측 목록에서 사원을 선택해주세요.</p></div>
+                            <div class="p-8 flex-1 overflow-y-auto">
+                                <div class="flex justify-between items-start mb-8 pb-6 border-b border-gray-100">
+                                    <div class="flex items-center"><div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl mr-4 shadow-lg shadow-brand-200"><span id="target-emp-initial">A</span></div><div><h3 class="text-xl font-bold text-gray-900 flex items-center"><span id="target-emp-name">사원명</span><span id="target-emp-type" class="ml-2 text-xs font-semibold text-white bg-slate-500 px-2 py-0.5 rounded">고용형태</span></h3><span id="target-emp-pos" class="text-xs text-brand-600 font-bold mt-0.5 block">직급</span><span id="target-emp-id" class="text-xs text-gray-400 font-mono mt-0.5 block">EMP-ID</span></div></div>
+                                    <div class="text-right"><button onclick="openRateModal()" class="text-xs font-medium text-gray-500 hover:text-brand-600 flex items-center border border-gray-200 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-white transition-all"><i class="fa-solid fa-sliders mr-1.5"></i> 환경 설정</button><p class="text-[10px] text-gray-400 mt-1.5 text-right">2026년도 표준요율 적용 중</p></div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div class="space-y-6">
+                                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                            <h4 class="text-sm font-bold text-slate-700 mb-4">근태 및 시간 외 수당</h4>
+                                            <div class="space-y-3">
+                                                <div class="grid grid-cols-3 gap-3 items-center"><label class="text-xs text-gray-500 font-medium">기본 근로시간</label><input type="number" id="inp-base-time" oninput="calcCurrent()" class="col-span-2 text-right text-sm border-gray-300 rounded bg-white"></div>
+                                                <div class="grid grid-cols-3 gap-3 items-center"><label class="text-xs font-bold text-brand-700">연장근로</label><input type="number" id="inp-ot-time" oninput="calcCurrent()" class="col-span-2 block w-full border-gray-300 rounded text-right text-sm"></div>
+                                                <div class="grid grid-cols-3 gap-3 items-center"><label class="text-xs font-bold text-brand-700">야간근로</label><input type="number" id="inp-night-time" oninput="calcCurrent()" class="col-span-2 block w-full border-gray-300 rounded text-right text-sm"></div>
+                                                <div class="grid grid-cols-3 gap-3 items-center"><label class="text-xs font-bold text-brand-700">휴일근로</label><input type="number" id="inp-holiday-time" oninput="calcCurrent()" class="col-span-2 block w-full border-gray-300 rounded text-right text-sm"></div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-white p-5 rounded-xl border border-gray-200">
+                                            <h4 class="text-sm font-bold text-gray-700 mb-4">변동 급여 및 공제</h4>
+                                            <div class="space-y-3">
+                                                 <div class="flex justify-between items-center"><label class="text-xs text-gray-500">식대 (비과세)</label><input type="number" id="inp-meal" oninput="calcCurrent()" class="w-32 border-gray-300 rounded text-right text-sm"></div>
+                                                <div class="flex justify-between items-center"><label class="text-xs text-gray-500">차량유지비 (비과세)</label><input type="number" id="inp-vehicle" oninput="calcCurrent()" class="w-32 border-gray-300 rounded text-right text-sm"></div>
+                                                <div class="flex justify-between items-center"><label class="text-xs text-gray-500">상여/성과급</label><input type="number" id="inp-bonus" oninput="calcCurrent()" class="w-32 border-gray-300 rounded text-right text-sm"></div>
+                                                <div class="flex justify-between items-center pt-3 border-t border-gray-100"><label class="text-xs font-bold text-red-500">결근(시간)</label><div class="flex items-center space-x-2"><input type="number" id="inp-absence-hours" oninput="calcCurrent()" class="w-16 border-red-200 rounded text-right text-sm bg-red-50"><input type="text" id="txt-deduction-calc" class="w-20 text-xs text-right text-red-400 bg-transparent border-none p-0" readonly></div></div>
+                                                <div class="flex justify-between items-center"><label class="text-xs font-bold text-red-500">기타 공제</label><input type="number" id="inp-deduction" oninput="calcCurrent()" class="w-32 border-red-200 rounded text-right text-sm bg-red-50"></div>
+                                            </div>
+                                            <div class="mt-4 pt-3 border-t border-gray-100"><label class="block text-xs font-bold text-gray-500 mb-1">비고 (메모)</label><textarea id="inp-memo" class="w-full border-gray-300 rounded-md text-xs p-2 h-16 resize-none"></textarea></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gradient-to-b from-white to-gray-50 p-6 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                                        <h4 class="text-sm font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200 relative z-10 flex justify-between"><span>급여 명세서 미리보기</span><span class="text-xs font-normal text-gray-400" id="preview-month"></span></h4>
+                                        <div class="space-y-1 relative z-10">
+                                            <div class="text-sm space-y-2 mb-4">
+                                                <div class="flex justify-between"><span class="text-gray-500">기본급</span><span id="res-base" class="font-medium text-gray-900">0</span></div>
+                                                <div class="flex justify-between"><span class="text-gray-500">연장/야간/휴일</span><span id="res-allowance">0</span></div>
+                                                <div class="flex justify-between"><span class="text-gray-500">식대/차량/상여</span><span id="res-other">0</span></div>
+                                                <div class="flex justify-between text-red-500 hidden" id="row-deduction"><span class="text-gray-500">감봉/결근</span><span id="res-deduction-disp">-0</span></div>
+                                                <div class="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-gray-300"><span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">지급계</span><span id="res-total-pay" class="font-bold text-blue-600">0</span></div>
+                                            </div>
+                                            <div class="text-xs space-y-1.5 text-gray-500 bg-gray-100 p-3 rounded-lg mb-4">
+                                                <div class="flex justify-between items-center"><span>국민연금</span><input type="number" id="res-pension-inp" oninput="manualDeductOverride()" class="w-20 text-right bg-transparent border-none p-0 focus:ring-0 text-gray-500" readonly></div>
+                                                <div class="flex justify-between items-center"><span>건강보험</span><input type="number" id="res-health-inp" oninput="manualDeductOverride()" class="w-20 text-right bg-transparent border-none p-0 focus:ring-0 text-gray-500" readonly></div>
+                                                <div class="flex justify-between items-center"><span>장기요양</span><input type="number" id="res-care-inp" oninput="manualDeductOverride()" class="w-20 text-right bg-transparent border-none p-0 focus:ring-0 text-gray-500" readonly></div>
+                                                <div class="flex justify-between items-center"><span>고용보험</span><input type="number" id="res-employ-inp" oninput="manualDeductOverride()" class="w-20 text-right bg-transparent border-none p-0 focus:ring-0 text-gray-500" readonly></div>
+                                                <div class="flex justify-between items-center"><span>소득세/지방세</span><input type="number" id="res-tax-inp" oninput="manualDeductOverride()" class="w-20 text-right bg-transparent border-none p-0 focus:ring-0 text-gray-500" readonly></div>
+                                                <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-300"><span class="font-bold text-red-500">공제계</span><span id="res-total-deduct" class="font-bold text-red-500">0</span></div>
+                                                <div class="mt-2 text-right"><button type="button" onclick="enableDeductEdit()" class="text-[10px] text-brand-600 underline">공제액 수동 수정</button></div>
+                                            </div>
+                                        </div>
+                                        <div class="pt-2 border-t-2 border-brand-500 relative z-10">
+                                            <div class="flex justify-between items-end"><span class="text-xs font-bold text-gray-500 uppercase tracking-wide">Net Payment</span><span class="text-3xl font-bold text-brand-700 tracking-tight" id="res-net-pay">0</span></div>
+                                            <p class="text-[10px] text-right text-gray-400 mt-1">실 수령액 (세후)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end items-center">
+                                <span class="text-xs text-gray-400 mr-4"><i class="fa-solid fa-circle-check mr-1"></i>확정 시 급여대장에 반영됩니다.</span>
+                                <button id="btn-save-payroll" onclick="savePayroll()" class="px-8 py-3 bg-brand-600 text-white font-bold rounded-lg shadow-lg hover:bg-brand-700 hover:shadow-xl transition-all flex items-center"><i class="fa-solid fa-check-double mr-2"></i> 확정 및 저장</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: RETIREMENT -->
+                <div id="view-retirement" class="hidden space-y-6">
+                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white"><h3 class="text-lg font-bold text-gray-900">퇴직금 추계 및 정산</h3></div>
+                     <div class="p-10"><div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div class="space-y-8"><div class="bg-blue-50 p-6 rounded-xl border border-blue-100 shadow-sm"><h4 class="text-sm font-bold text-blue-800 mb-6 flex items-center"><i class="fa-solid fa-user-clock mr-2"></i>근속 기간 산정</h4><div class="space-y-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">대상 사원</label><select id="ret-emp-select" onchange="onRetirementEmpChange()" class="block w-full border-gray-300 rounded-lg text-sm py-2.5"><option value="">사원을 선택하세요</option></select></div><div class="grid grid-cols-2 gap-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">입사일</label><input type="date" id="ret-start-date" class="block w-full border-gray-300 rounded-lg text-sm bg-gray-100" readonly></div><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">퇴사일(정산일)</label><input type="date" id="ret-end-date" class="block w-full border-gray-300 rounded-lg text-sm"></div></div><div class="flex items-center justify-between bg-white p-3 rounded-lg border border-blue-200"><span class="text-xs font-bold text-blue-600">재직 일수</span><span id="ret-days-display" class="font-bold text-blue-800 text-lg">- 일</span></div></div></div><div><label class="block text-sm font-bold text-gray-700 mb-3">평균 임금 산정 (직전 3개월 총액)</label><div class="relative"><input type="number" id="ret-3month-total" class="block w-full border-gray-300 rounded-lg text-right pr-12 text-lg font-medium py-3" placeholder="0"><div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-500 font-bold">원</span></div></div></div><button onclick="calcRetirement()" class="w-full py-4 bg-brand-600 text-white font-bold text-lg rounded-xl shadow-lg hover:bg-brand-700 transition-all"><i class="fa-solid fa-calculator mr-2"></i> 퇴직금 계산하기</button></div>
+                        <div class="bg-gray-900 text-white p-8 rounded-2xl shadow-2xl flex flex-col justify-between relative overflow-hidden"><div class="relative z-10"><h4 class="text-sm font-medium text-gray-400 uppercase tracking-widest mb-2">Estimated Amount</h4><div class="flex items-baseline"><h2 class="text-5xl font-bold text-white tracking-tight" id="ret-result">0</h2><span class="ml-2 text-xl text-gray-500">원</span></div></div><div class="relative z-10 mt-12 space-y-4 border-t border-gray-700 pt-6"><div class="flex justify-between text-sm"><span class="text-gray-400">1일 평균임금</span><span class="font-mono" id="ret-avg-daily">0 원</span></div></div></div>
+                     </div></div></div>
+                </div>
+
+                <!-- VIEW: HISTORY -->
+                <div id="view-history" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white"><h3 class="text-lg font-bold text-gray-900">급여 대장 조회</h3><button onclick="window.print()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 text-gray-700 font-medium"><i class="fa-solid fa-print mr-2"></i> 인쇄</button></div>
+                        <div class="p-6 border-b border-gray-100 bg-gray-50"><div class="flex items-center"><label class="text-sm font-bold text-gray-700 mr-3">조회 년월</label><input type="month" id="history-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2"><button onclick="loadHistory()" class="ml-3 px-5 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 shadow-md"><i class="fa-solid fa-magnifying-glass mr-1"></i> 검색</button></div></div>
+                        <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-100 text-sm"><thead class="bg-gray-50"><tr><th class="px-6 py-4 text-left font-bold text-gray-500">사원정보</th><th class="px-6 py-4 text-right font-bold text-gray-500">기본급</th><th class="px-6 py-4 text-right font-bold text-blue-600">수당합계</th><th class="px-6 py-4 text-right font-bold text-gray-800">지급총액</th><th class="px-6 py-4 text-right font-bold text-red-600">공제총액</th><th class="px-6 py-4 text-right font-bold text-brand-700">실수령액</th><th class="px-6 py-4 text-center font-bold text-gray-500">관리</th></tr></thead>
+                                <tbody id="history-list-body" class="bg-white divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: PAYSLIP (UPDATED GRID FOR PRINT) -->
+                <div id="view-payslip" class="hidden space-y-6 h-full flex flex-col pb-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                        <div class="lg:col-span-4 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden"><div class="p-5 border-b border-gray-100 bg-gray-50"><label class="block text-xs font-bold text-gray-500 uppercase mb-2">명세서 조회 년월</label><div class="flex gap-2"><div class="relative flex-1"><input type="month" id="payslip-month" class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 text-sm py-2.5"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-calendar text-gray-400"></i></div></div><button onclick="loadPayslipList()" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700">조회</button></div></div><div class="flex-1 overflow-y-auto p-3"><ul id="payslip-emp-list" class="space-y-2"></ul></div></div>
+                        <div class="lg:col-span-8 bg-slate-100 rounded-xl shadow-inner border border-gray-200 flex flex-col h-full overflow-hidden p-6 relative">
+                            <div class="absolute top-4 right-6 z-10 no-print"><button onclick="printPayslip()" class="flex items-center px-4 py-2 bg-white text-brand-700 font-bold text-sm rounded-lg shadow hover:bg-brand-50 border border-brand-200"><i class="fa-solid fa-print mr-2"></i> 명세서 인쇄</button></div>
+                            <div class="flex-1 overflow-auto flex justify-center"><div id="printable-area" class="bg-white shadow-lg w-full max-w-[210mm] min-h-[297mm] p-10 box-border text-slate-800 hidden"><div class="text-center mb-8 border-b-2 border-slate-800 pb-4"><h1 class="text-2xl font-bold tracking-widest mb-1">급 여 명 세 서</h1><p class="text-sm text-gray-500" id="ps-title-month">2026년 01월분</p></div><table class="w-full text-sm mb-8 payslip-table"><tr><th class="w-24 bg-gray-50">사번</th><td id="ps-id"></td><th class="w-24 bg-gray-50">성명</th><td id="ps-name"></td><th class="w-24 bg-gray-50">부서</th><td id="ps-dept"></td></tr><tr><th class="bg-gray-50">직급</th><td id="ps-pos"></td><th class="bg-gray-50">지급일</th><td id="ps-date"></td><th class="bg-gray-50">생년월일</th><td>******</td></tr></table>
+                            <!-- Balanced Grid for Print -->
+                            <div class="print-grid grid grid-cols-2 gap-4 mb-8">
+                                <div class="print-col"><table class="w-full text-sm payslip-table"><thead><tr><th colspan="2" class="bg-blue-50 text-blue-800 border-blue-200">지급 내역</th></tr><tr><th class="w-1/2">항목</th><th>금액</th></tr></thead><tbody id="ps-pay-body"></tbody><tfoot><tr class="bg-blue-50 font-bold"><td class="text-center">지급 총액</td><td class="text-right" id="ps-total-pay">0</td></tr></tfoot></table></div>
+                                <div class="print-col"><table class="w-full text-sm payslip-table"><thead><tr><th colspan="2" class="bg-red-50 text-red-800 border-red-200">공제 내역</th></tr><tr><th class="w-1/2">항목</th><th>금액</th></tr></thead><tbody id="ps-deduct-body"></tbody><tfoot><tr class="bg-red-50 font-bold"><td class="text-center">공제 총액</td><td class="text-right" id="ps-total-deduct">0</td></tr></tfoot></table></div>
+                            </div><div class="border-2 border-slate-800 p-4 mb-8 flex justify-between items-center bg-slate-50"><span class="text-lg font-bold text-slate-700">차인 지급액 (실수령액)</span><span class="text-2xl font-bold text-slate-900" id="ps-net-pay">0 원</span></div><div class="text-center text-xs text-gray-400 mt-12"><p class="mb-2">위와 같이 급여를 지급합니다.</p><p class="font-bold text-sm text-gray-600">주식회사 아마란스</p></div></div><div id="payslip-placeholder" class="flex flex-col items-center justify-center text-gray-400 h-full"><i class="fa-regular fa-file-lines text-4xl mb-2"></i><p>좌측 목록에서 사원을 선택하세요.</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="employee-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeEmployeeModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-lg">
+                    <div class="bg-white px-8 py-6">
+                        <h3 class="text-xl font-bold leading-6 text-gray-900 mb-6 border-b pb-4" id="emp-modal-title">사원 등록</h3>
+                        <form id="emp-form" class="space-y-5">
+                            <input type="hidden" name="docId" id="emp-doc-id">
+                            <div id="source-lock-hint" class="hidden text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                                외부 연동 항목(이름/부서/직급/입사일)은 읽기 전용입니다. 급여/부양가족/은행 정보는 이 앱에서 직접 관리합니다.
+                            </div>
+                            <div class="grid grid-cols-2 gap-5">
+                                <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">고용 형태</label><select name="empType" id="emp-type-select" onchange="toggleSalaryLabel()" class="w-full border-gray-300 rounded-lg text-sm"><option value="salary">연봉직</option><option value="hourly">시급직</option><option value="contract">계약직</option><option value="daily">일용직</option></select></div>
+                                <div class="flex items-center pt-6"><input type="checkbox" name="insurance" id="emp-insurance" class="h-4 w-4 text-brand-600 rounded"><label for="emp-insurance" class="ml-2 block text-sm text-gray-900 font-bold">4대보험 가입 대상</label></div>
+                            </div>
+                            <!-- INCLUSIVE WAGE OPTIONS -->
+                             <div id="inclusive-wage-section" class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 hidden">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="isInclusive" id="emp-isInclusive" class="h-4 w-4 text-indigo-600 rounded" onchange="toggleInclusiveInputs()">
+                                        <label for="emp-isInclusive" class="ml-2 text-sm font-bold text-indigo-900">포괄임금제 적용</label>
+                                    </div>
+                                </div>
+                                <div id="inclusive-inputs" class="hidden">
+                                     <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="block text-[10px] text-indigo-600 mb-1">월 고정연장시간</label><input type="number" name="fixedOvertimeHours" id="emp-fixedOvertimeHours" class="w-full text-right text-sm border-indigo-300 rounded" placeholder="예: 20"></div>
+                                        <div class="flex items-end text-xs text-indigo-400 pb-2">* 기본급/고정수당 자동 분리</div>
+                                     </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">이름</label><input type="text" name="name" required class="w-full border-gray-300 rounded-lg text-sm"></div><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">사번</label><input type="text" name="id" required class="w-full border-gray-300 rounded-lg text-sm"></div></div>
+                            <div class="grid grid-cols-2 gap-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">부서</label><input type="text" name="dept" class="w-full border-gray-300 rounded-lg text-sm"></div><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">직급</label><input type="text" name="position" class="w-full border-gray-300 rounded-lg text-sm"></div></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">입사일</label><input type="date" name="joinDate" required class="w-full border-gray-300 rounded-lg text-sm"></div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">근무 조건 (소정근로시간 자동 산출)</label>
+                                <div class="grid grid-cols-3 gap-3 mb-2">
+                                    <div><label class="text-[10px] text-gray-400">1일 근무시간</label><input type="number" id="calc-daily-hours" oninput="autoCalcHours()" class="w-full text-right text-sm border-gray-300 rounded" value="8"></div>
+                                    <div><label class="text-[10px] text-gray-400">주당 근무일수</label><input type="number" id="calc-weekly-days" oninput="autoCalcHours()" class="w-full text-right text-sm border-gray-300 rounded" value="5"></div>
+                                    <div><label class="text-[10px] text-gray-400">월 소정근로(H)</label><input type="number" name="contractHours" id="calc-contract-hours" class="w-full text-right text-sm border-gray-300 rounded bg-gray-100 font-bold" readonly value="209"></div>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <label class="block text-xs font-bold text-blue-800 mb-2 uppercase">급여 정보 (자동 환산)</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="block text-[10px] text-blue-600 mb-1" id="label-annual">연봉 (Annual)</label><input type="number" id="calc-annual-salary" oninput="autoCalcSalary('annual')" class="w-full text-right text-sm border-blue-300 rounded" placeholder="0"></div>
+                                    <div><label class="block text-[10px] text-blue-600 mb-1" id="salary-label">월 기본급 (Monthly)</label><input type="number" name="baseSalary" id="calc-base-salary" oninput="autoCalcSalary('monthly')" required class="w-full text-right text-sm border-blue-300 rounded font-bold" placeholder="0"></div>
+                                </div>
+                            </div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">부양가족 수</label><input type="number" name="dependents" value="1" required class="w-full border-gray-300 rounded-lg text-sm text-right"></div>
+                             <div class="grid grid-cols-3 gap-3"><div class="col-span-1"><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">은행명</label><input type="text" name="bankName" class="w-full border-gray-300 rounded-lg text-sm"></div><div class="col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">계좌번호</label><input type="text" name="accountNum" class="w-full border-gray-300 rounded-lg text-sm"></div></div>
+                        </form>
+                    </div>
+                    <div class="bg-gray-50 px-8 py-4 sm:flex sm:flex-row-reverse"><button type="button" onclick="saveEmployee()" class="inline-flex w-full justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-brand-700 sm:ml-3 sm:w-auto">저장하기</button><button type="button" onclick="closeEmployeeModal()" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">취소</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="rate-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeRateModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+             <div class="flex min-h-full items-center justify-center p-4 text-center">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md">
+                    <div class="bg-white px-6 py-6">
+                        <div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-lg font-bold text-gray-900">환경 설정</h3><button onclick="closeRateModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button></div>
+                        <div class="mb-6 border-b pb-6"><h4 class="text-sm font-bold text-gray-800 mb-3">급여 지급일 설정</h4><div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200"><label class="text-sm text-gray-600">매월 지급일</label>
+                            <select id="config-pay-day" class="block w-32 border-gray-300 rounded text-sm">
+                                <script>
+                                    for(let i=1; i<=31; i++) document.write(`<option value="${i}">${i}일</option>`);
+                                    document.write(`<option value="末">말일</option>`);
+                                </script>
+                            </select>
+                        </div></div>
+                        <div class="mb-6 border-b pb-6"><h4 class="text-sm font-bold text-gray-800 mb-3">관리자 비밀번호 변경</h4><div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2"><input type="password" id="new-password" class="block w-full border-gray-300 rounded text-sm" placeholder="새 비밀번호 입력"><button onclick="changePassword()" class="w-full bg-white border border-gray-300 rounded text-xs py-2 hover:bg-gray-100">변경하기</button></div></div>
+                        <div><form id="rate-form" class="space-y-4"><div class="flex justify-between items-center"><label class="text-sm font-medium text-gray-700">국민연금</label><div class="flex items-center"><input type="number" id="rate-pension" step="0.01" class="w-24 text-right border-gray-300 rounded text-sm"> %</div></div><div class="flex justify-between items-center"><label class="text-sm font-medium text-gray-700">건강보험</label><div class="flex items-center"><input type="number" id="rate-health" step="0.01" class="w-24 text-right border-gray-300 rounded text-sm"> %</div></div><div class="flex justify-between items-center"><label class="text-sm font-medium text-gray-700">장기요양</label><div class="flex items-center"><input type="number" id="rate-care" step="0.01" class="w-24 text-right border-gray-300 rounded text-sm"> %</div></div><div class="flex justify-between items-center"><label class="text-sm font-medium text-gray-700">고용보험</label><div class="flex items-center"><input type="number" id="rate-employ" step="0.01" class="w-24 text-right border-gray-300 rounded text-sm"> %</div></div></form></div>
+                    </div>
+                    <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse"><button type="button" onclick="saveRates()" class="inline-flex w-full justify-center rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-700 sm:ml-3 sm:w-auto">저장</button><button type="button" onclick="closeRateModal()" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">취소</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script type="module">
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
+        import { getFirestore, collection, collectionGroup, addDoc, getDocs, onSnapshot, updateDoc, doc, query, where, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // *** USER CONFIG ***
+        const firebaseConfig = {
+            apiKey: "AIzaSyCj9r6mGoV317eCn9PnkD_2o5OyO2mUz-M",
+            authDomain: "manufacturingpayroll.firebaseapp.com",
+            projectId: "manufacturingpayroll",
+            storageBucket: "manufacturingpayroll.firebasestorage.app",
+            messagingSenderId: "298741004102",
+            appId: "1:298741004102:web:931e5b56465d0056971747",
+            measurementId: "G-QBV2RVBT2G"
+        };
+        const sourceFirebaseConfig = {
+            apiKey: "AIzaSyDm0qnGzq8P3zBBqW_4qjlMd9aq-QKrDyU",
+            authDomain: "hr-manager-6635c.firebaseapp.com",
+            projectId: "hr-manager-6635c",
+            storageBucket: "hr-manager-6635c.firebasestorage.app",
+            messagingSenderId: "796639392690",
+            appId: "1:796639392690:web:f218aa1f65c3b01518aaab",
+            measurementId: "G-HSN9YHSNNK"
+        };
+
+        let db;
+        let sourceDb;
+        let isDemoMode = false;
+        let trendChart = null, deptChart = null, overtimeChart = null, compChart = null;
+        let cachedPayslipData = [];
+
+        window.currentEmployee = null;
+        window.employeeData = [];
+        window.editingDocId = null;
+        window.historyData = [];
+        window.systemConfig = { paymentDay: '25', password: 'admin1234' };
+        window.payrollRates = { pension: 4.5, health: 3.60, care: 13.20, employ: 0.9, employer_pension: 4.5, employer_health: 3.60, employer_employ: 1.15, employer_injury: 0.9 };
+        window.isDeductOverridden = false;
+        window.sourceSyncRuntime = { started: false, isApplying: false, lastDigest: '', pollId: null, unsubs: [] };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            console.log("Firebase initialized");
+        } catch (e) {
+            isDemoMode = true;
+        }
+
+        try {
+            const sourceApp = getApps().some(a => a.name === 'hr-manager-source')
+                ? getApp('hr-manager-source')
+                : initializeApp(sourceFirebaseConfig, 'hr-manager-source');
+            sourceDb = getFirestore(sourceApp);
+            console.log("External source initialized");
+        } catch (e) {
+            sourceDb = null;
+            console.warn("External source init failed:", e);
+        }
+
+        const initConfig = async () => {
+            if(!isDemoMode) {
+                try {
+                    const docSnap = await getDoc(doc(db, "config", "settings"));
+                    if(docSnap.exists()) {
+                        const d = docSnap.data();
+                        if(d.paymentDay) window.systemConfig.paymentDay = d.paymentDay;
+                        if(d.payrollRates) window.payrollRates = d.payrollRates;
+                        if(d.password) window.systemConfig.password = d.password;
+                    }
+                } catch(e) {}
+            } else {
+                 const local = JSON.parse(localStorage.getItem('app_config') || '{}');
+                 if(local.paymentDay) window.systemConfig.paymentDay = local.paymentDay;
+                 if(local.payrollRates) window.payrollRates = local.payrollRates;
+                 if(local.password) window.systemConfig.password = local.password;
+            }
+        };
+        initConfig();
+
+        const getValue = (id) => { const el = document.getElementById(id); return el ? Number(el.value) : 0; }
+        const localManagedDefaults = {
+            empType: 'salary',
+            baseSalary: 0,
+            contractHours: 209,
+            dependents: 1,
+            insurance: true,
+            bankName: '',
+            accountNum: '',
+            isInclusive: false,
+            fixedOvertimeHours: 0
+        };
+        const getFirst = (obj, keys) => {
+            for (const k of keys) {
+                const v = obj?.[k];
+                if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+            }
+            return '';
+        };
+        const findDeepValue = (input, keyPatterns, depth = 0) => {
+            if (!input || depth > 6) return '';
+            if (Array.isArray(input)) {
+                for (const item of input) {
+                    const v = findDeepValue(item, keyPatterns, depth + 1);
+                    if (v !== '' && v !== null && v !== undefined) return v;
+                }
+                return '';
+            }
+            if (typeof input !== 'object') return '';
+            const keys = Object.keys(input);
+            for (const k of keys) {
+                const lk = String(k).toLowerCase();
+                if (keyPatterns.some((p) => lk.includes(p))) {
+                    const v = input[k];
+                    if (v !== '' && v !== null && v !== undefined) return v;
+                }
+            }
+            for (const k of keys) {
+                const v = findDeepValue(input[k], keyPatterns, depth + 1);
+                if (v !== '' && v !== null && v !== undefined) return v;
+            }
+            return '';
+        };
+        const normalizeDate = (v) => {
+            if (!v) return '';
+            if (typeof v === 'string') {
+                const s = v.trim();
+                if (!s) return '';
+                const ymd = s.match(/^(\d{4})[.\-/년\s]?(\d{1,2})[.\-/월\s]?(\d{1,2})/);
+                if (ymd) {
+                    const y = ymd[1];
+                    const m = String(ymd[2]).padStart(2, '0');
+                    const d = String(ymd[3]).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                const eight = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+                if (eight) return `${eight[1]}-${eight[2]}-${eight[3]}`;
+                const dt = new Date(s);
+                if (!Number.isNaN(dt.getTime())) {
+                    const y = dt.getFullYear();
+                    const m = String(dt.getMonth() + 1).padStart(2, '0');
+                    const d = String(dt.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                return '';
+            }
+            if (typeof v === 'number') {
+                const dt = new Date(v);
+                if (!Number.isNaN(dt.getTime())) {
+                    const y = dt.getFullYear();
+                    const m = String(dt.getMonth() + 1).padStart(2, '0');
+                    const d = String(dt.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                return '';
+            }
+            if (typeof v === 'object') {
+                if (typeof v.toDate === 'function') {
+                    const dt = v.toDate();
+                    if (dt instanceof Date && !Number.isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+                }
+                if (v.seconds) {
+                    const dt = new Date(Number(v.seconds) * 1000);
+                    if (!Number.isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+                }
+            }
+            return '';
+        };
+        const normalizeSourceEmployee = (raw, fallbackId = '') => {
+            const name = String(
+                getFirst(raw, ['name', 'empName', 'employeeName', 'fullName', '이름', '성명']) ||
+                findDeepValue(raw, ['name', 'empname', 'employee', 'fullname', '이름', '성명'])
+            ).trim();
+            const dept = String(
+                getFirst(raw, ['dept', 'department', 'team', '부서', '부문']) ||
+                findDeepValue(raw, ['dept', 'department', 'team', '부서', '부문'])
+            ).trim();
+            const position = String(
+                getFirst(raw, ['position', 'jobTitle', 'rank', '직급', '직책']) ||
+                findDeepValue(raw, ['position', 'jobtitle', 'rank', '직급', '직책'])
+            ).trim();
+            const joinDateRaw =
+                getFirst(raw, ['joinDate', 'hireDate', 'joinedAt', 'startDate', '입사일', '입사일자', '입사']) ||
+                findDeepValue(raw, ['joindate', 'join', 'hiredate', 'hire', 'startdate', '입사', '채용', '고용시작']);
+            const joinDate = normalizeDate(joinDateRaw);
+            const sourceEmpNo = String(getFirst(raw, ['id', 'empId', 'employeeId', 'employeeNo', 'empNo']) || '').trim();
+            const sourceId = String(getFirst(raw, ['sourceId']) || fallbackId || sourceEmpNo || '').trim();
+            if (!name) return null;
+            return { sourceId, sourceEmpNo, name, dept, position, joinDate };
+        };
+        const digestEmployees = (items) => {
+            const keys = items
+                .map((x) => `${x.sourceId || ''}|${x.sourceEmpNo || ''}|${x.name || ''}|${x.dept || ''}|${x.position || ''}|${x.joinDate || ''}`)
+                .sort();
+            return keys.join('||');
+        };
+        const sanitizeEmpId = (rawId, sourceEmpNo = '') => {
+            const src = String(sourceEmpNo || '').trim();
+            if (src) return src;
+            const cur = String(rawId || '').trim();
+            if (!cur) return '';
+            if (cur.startsWith('EXT-')) return '';
+            return cur;
+        };
+        const displayEmpId = (rawId) => sanitizeEmpId(rawId, '');
+        const sameName = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+        const isMatchEmployee = (localEmp, srcEmp) => {
+            if (!localEmp || !srcEmp) return false;
+            if (localEmp.externalSourceId && srcEmp.sourceId && localEmp.externalSourceId === srcEmp.sourceId) return true;
+            if (srcEmp.sourceEmpNo && localEmp.id && localEmp.id === srcEmp.sourceEmpNo) return true;
+            if (!srcEmp.sourceEmpNo && sameName(localEmp.name, srcEmp.name)) return true;
+            return false;
+        };
+        const setFormFieldLock = (locked) => {
+            const form = document.getElementById('emp-form');
+            if (!form) return;
+            ['name', 'dept', 'position', 'joinDate'].forEach((k) => {
+                const el = form[k];
+                if (!el) return;
+                if (k === 'joinDate') {
+                    el.readOnly = locked;
+                    el.disabled = locked;
+                } else {
+                    el.readOnly = locked;
+                }
+                el.classList.toggle('bg-gray-100', locked);
+                el.classList.toggle('text-gray-500', locked);
+            });
+            const lockInfo = document.getElementById('source-lock-hint');
+            if (lockInfo) lockInfo.classList.toggle('hidden', !locked);
+        };
+
+        window.fetchSourceEmployees = async () => {
+            if (!sourceDb) throw new Error('외부 Firebase 연결 실패');
+
+            const out = [];
+            const pushIfValid = (raw, id = '') => {
+                const emp = normalizeSourceEmployee(raw, id);
+                if (emp) out.push(emp);
+            };
+            const pushFromPayload = (payload, baseId = 'json') => {
+                if (!payload) return;
+                if (Array.isArray(payload)) {
+                    payload.forEach((row, idx) => pushIfValid(row, `${baseId}-${idx}`));
+                    return;
+                }
+                if (typeof payload !== 'object') return;
+                const arr = Array.isArray(payload.employees) ? payload.employees : (Array.isArray(payload.items) ? payload.items : null);
+                if (arr && arr.length) {
+                    arr.forEach((row, idx) => pushIfValid(row, `${baseId}-${idx}`));
+                    return;
+                }
+                Object.keys(payload).forEach((key) => {
+                    const row = payload[key];
+                    if (row && typeof row === 'object') pushIfValid(row, `${baseId}-${key}`);
+                });
+            };
+
+            try {
+                const snap = await getDocs(collection(sourceDb, "employees"));
+                if (!snap.empty) {
+                    snap.forEach((d) => pushIfValid(d.data(), d.id));
+                    return out;
+                }
+            } catch (e) {}
+
+            // Explicit path hint from legacy app structure
+            try {
+                const snap = await getDocs(collection(sourceDb, "artifacts", "hr-manager-6635c", "public", "data", "employees"));
+                if (!snap.empty) {
+                    snap.forEach((d) => pushIfValid(d.data(), d.id));
+                    return out;
+                }
+            } catch (e) {}
+
+            // Collection group fallback: find any collection named "employees" in this project
+            try {
+                const cgSnap = await getDocs(collectionGroup(sourceDb, "employees"));
+                if (!cgSnap.empty) {
+                    cgSnap.forEach((d) => pushIfValid(d.data(), d.id));
+                    if (out.length) return out;
+                }
+            } catch (e) {}
+
+            try {
+                const dataDoc = await getDoc(doc(sourceDb, "data", "employees"));
+                if (dataDoc.exists()) {
+                    const payload = dataDoc.data() || {};
+                    const arr = Array.isArray(payload.employees) ? payload.employees : (Array.isArray(payload.items) ? payload.items : []);
+                    if (arr.length) {
+                        arr.forEach((row, idx) => pushIfValid(row, `data-employees-${idx}`));
+                        return out;
+                    }
+                    Object.keys(payload).forEach((key) => {
+                        if (typeof payload[key] === 'object' && payload[key] !== null) pushIfValid(payload[key], key);
+                    });
+                    if (out.length) return out;
+                }
+            } catch (e) {}
+
+            try {
+                const dataDoc = await getDoc(doc(sourceDb, "artifacts", "hr-manager-6635c", "public", "data"));
+                if (dataDoc.exists()) {
+                    const payload = dataDoc.data() || {};
+                    pushFromPayload(payload.employees || payload.employeeList || payload.data || payload, 'artifacts-data');
+                    if (out.length) return out;
+                }
+            } catch (e) {}
+
+            try {
+                const nestedSnap = await getDocs(collection(sourceDb, "data", "employees", "items"));
+                if (!nestedSnap.empty) {
+                    nestedSnap.forEach((d) => pushIfValid(d.data(), d.id));
+                    return out;
+                }
+            } catch (e) {}
+
+            // Fallback: hosted JSON/static file
+            const candidates = [
+                "https://hr-manager-6635c.web.app/data/employees.json",
+                "https://hr-manager-6635c.web.app/data/employees",
+                "https://hr-manager-6635c.web.app/data/employees/index.json",
+                "https://hr-manager-6635c.firebaseapp.com/data/employees.json",
+                "https://hr-manager-6635c.firebaseapp.com/data/employees",
+                "https://hr-manager-6635c.firebaseapp.com/data/employees/index.json"
+            ];
+            for (const url of candidates) {
+                try {
+                    const res = await fetch(url, { method: 'GET' });
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    pushFromPayload(data, url.split('/').pop() || 'employees');
+                    if (out.length) return out;
+                } catch (e) {}
+            }
+
+            return out;
+        };
+
+        window.applySourceEmployees = async (sourceEmployees, silent = true) => {
+            if (!sourceEmployees.length) return false;
+            const dedupedEmployees = sourceEmployees.filter((emp, idx, arr) => {
+                const key = emp.sourceId || emp.sourceEmpNo || `${emp.name}_${emp.joinDate}`;
+                return arr.findIndex((x) => (x.sourceId || x.sourceEmpNo || `${x.name}_${x.joinDate}`) === key) === idx;
+            });
+            const digest = digestEmployees(dedupedEmployees);
+            if (digest && digest === window.sourceSyncRuntime.lastDigest) return false;
+            window.sourceSyncRuntime.lastDigest = digest;
+
+            let created = 0, updated = 0;
+                if (isDemoMode) {
+                    dedupedEmployees.forEach((src) => {
+                        const idx = window.employeeData.findIndex((e) => isMatchEmployee(e, src));
+                        if (idx > -1) {
+                            const prev = window.employeeData[idx];
+                            window.employeeData[idx] = {
+                                ...localManagedDefaults,
+                                ...prev,
+                            name: src.name,
+                            dept: src.dept,
+                                position: src.position,
+                                joinDate: src.joinDate,
+                                externalSourceId: src.sourceId || prev.externalSourceId || src.sourceEmpNo,
+                                sourceSyncLocked: true,
+                                id: sanitizeEmpId(prev.id, src.sourceEmpNo)
+                            };
+                            updated++;
+                        } else {
+                            window.employeeData.push({
+                                ...localManagedDefaults,
+                                docId: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+                                id: sanitizeEmpId('', src.sourceEmpNo),
+                                name: src.name,
+                                dept: src.dept,
+                                position: src.position,
+                                joinDate: src.joinDate,
+                            externalSourceId: src.sourceId || src.sourceEmpNo,
+                            sourceSyncLocked: true
+                        });
+                        created++;
+                    }
+                });
+                localStorage.setItem('employees', JSON.stringify(window.employeeData));
+            } else {
+                const localSnap = await getDocs(collection(db, "employees"));
+                const localList = [];
+                localSnap.forEach((d) => localList.push({ ...d.data(), docId: d.id }));
+                for (const src of dedupedEmployees) {
+                    const found = localList.find((e) => isMatchEmployee(e, src));
+                    if (found) {
+                        await updateDoc(doc(db, "employees", found.docId), {
+                            id: sanitizeEmpId(found.id, src.sourceEmpNo),
+                            name: src.name,
+                            dept: src.dept,
+                            position: src.position,
+                            joinDate: src.joinDate,
+                            externalSourceId: src.sourceId || found.externalSourceId || src.sourceEmpNo,
+                            sourceSyncLocked: true
+                        });
+                        updated++;
+                    } else {
+                        await addDoc(collection(db, "employees"), {
+                            ...localManagedDefaults,
+                            id: sanitizeEmpId('', src.sourceEmpNo),
+                            name: src.name,
+                            dept: src.dept,
+                            position: src.position,
+                            joinDate: src.joinDate,
+                            externalSourceId: src.sourceId || src.sourceEmpNo,
+                            sourceSyncLocked: true
+                        });
+                        created++;
+                    }
+                }
+            }
+            await loadEmployees();
+            if (!silent) alert(`외부 사원 동기화 완료\n조회: ${sourceEmployees.length}건 / 중복제거: ${dedupedEmployees.length}건\n신규: ${created}건 / 갱신: ${updated}건`);
+            return true;
+        };
+
+        window.syncSourceEmployees = async (silent = true) => {
+            if (window.sourceSyncRuntime.isApplying) return false;
+            window.sourceSyncRuntime.isApplying = true;
+            try {
+                const sourceEmployees = await fetchSourceEmployees();
+                if (!sourceEmployees.length) {
+                    if (!silent) alert("외부 사원 데이터가 없거나 읽기 경로를 찾지 못했습니다.");
+                    return false;
+                }
+                return await applySourceEmployees(sourceEmployees, silent);
+            } catch (e) {
+                if (!silent) alert("외부 사원 동기화 실패: " + e.message);
+                return false;
+            } finally {
+                window.sourceSyncRuntime.isApplying = false;
+            }
+        };
+
+        window.startSourceAutoSync = () => {
+            if (window.sourceSyncRuntime.started) return;
+            window.sourceSyncRuntime.started = true;
+            if (!sourceDb) return;
+
+            const bindCollection = (refFactory) => {
+                try {
+                    const ref = refFactory();
+                    const unsub = onSnapshot(ref, async (snap) => {
+                        const rows = [];
+                        snap.forEach((d) => {
+                            const emp = normalizeSourceEmployee(d.data(), d.id);
+                            if (emp) rows.push(emp);
+                        });
+                        if (rows.length) await applySourceEmployees(rows, true);
+                    });
+                    window.sourceSyncRuntime.unsubs.push(unsub);
+                } catch (e) {}
+            };
+            const bindDoc = (refFactory, pickKey = '') => {
+                try {
+                    const ref = refFactory();
+                    const unsub = onSnapshot(ref, async (snap) => {
+                        if (!snap.exists()) return;
+                        const payload = snap.data() || {};
+                        const src = pickKey ? (payload[pickKey] || payload) : payload;
+                        const rows = [];
+                        const push = (raw, id) => {
+                            const emp = normalizeSourceEmployee(raw, id);
+                            if (emp) rows.push(emp);
+                        };
+                        if (Array.isArray(src)) src.forEach((r, i) => push(r, `${pickKey || 'doc'}-${i}`));
+                        else if (Array.isArray(src.employees)) src.employees.forEach((r, i) => push(r, `employees-${i}`));
+                        else if (Array.isArray(src.items)) src.items.forEach((r, i) => push(r, `items-${i}`));
+                        else Object.keys(src).forEach((k) => { if (typeof src[k] === 'object' && src[k] !== null) push(src[k], k); });
+                        if (rows.length) await applySourceEmployees(rows, true);
+                    });
+                    window.sourceSyncRuntime.unsubs.push(unsub);
+                } catch (e) {}
+            };
+
+            bindCollection(() => collection(sourceDb, "employees"));
+            bindCollection(() => collection(sourceDb, "artifacts", "hr-manager-6635c", "public", "data", "employees"));
+            bindCollection(() => collectionGroup(sourceDb, "employees"));
+            bindDoc(() => doc(sourceDb, "data", "employees"));
+            bindDoc(() => doc(sourceDb, "artifacts", "hr-manager-6635c", "public", "data"));
+
+            syncSourceEmployees(true);
+            window.sourceSyncRuntime.pollId = setInterval(() => { syncSourceEmployees(true); }, 90000);
+        };
+
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            if (document.getElementById('password').value === window.systemConfig.password) enterApp();
+            else alert("비밀번호 오류");
+        };
+
+        window.enterApp = () => {
+            const loginSection = document.getElementById('login-section');
+            if (loginSection) loginSection.classList.add('hidden');
+            
+            const appLayout = document.getElementById('app-layout');
+            if (appLayout) appLayout.classList.remove('hidden');
+            
+            const today = new Date();
+            const dateEl = document.getElementById('current-date');
+            if (dateEl) dateEl.innerText = today.toLocaleDateString('ko-KR');
+
+            const pMonth = document.getElementById('payroll-month');
+            if (pMonth) pMonth.value = today.toISOString().slice(0, 7);
+
+            const hMonth = document.getElementById('history-month');
+            if (hMonth) hMonth.value = today.toISOString().slice(0, 7);
+
+            const psMonth = document.getElementById('payslip-month');
+            if(psMonth) psMonth.value = today.toISOString().slice(0, 7);
+
+            loadEmployees();
+            startSourceAutoSync();
+            router('dashboard');
+        };
+        document.getElementById('login-form').addEventListener('submit', window.handleLogin);
+        window.logout = () => location.reload();
+
+        window.router = (viewName) => {
+            ['dashboard', 'employee', 'payroll', 'retirement', 'history', 'payslip'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if(el) el.classList.add('hidden');
+                const nav = document.getElementById(`nav-${v}`);
+                if(nav) { nav.classList.remove('bg-slate-800', 'text-white'); nav.classList.add('text-slate-300'); }
+            });
+            const viewEl = document.getElementById(`view-${viewName}`);
+            if(viewEl) viewEl.classList.remove('hidden');
+            const navEl = document.getElementById(`nav-${viewName}`);
+            if(navEl) { navEl.classList.add('bg-slate-800', 'text-white'); navEl.classList.remove('text-slate-300'); }
+            
+            if(viewName !== 'payroll' && window.editingDocId) {
+                window.editingDocId = null;
+                const btn = document.getElementById('btn-save-payroll');
+                if(btn) btn.innerHTML = '<i class="fa-solid fa-check-double mr-2"></i> 확정 및 저장';
+            }
+            if (viewName === 'dashboard') updateDashboard();
+            if (viewName === 'retirement') updateRetirementSelect();
+            if (viewName === 'history') loadHistory();
+            if (viewName === 'payslip') loadPayslipList();
+        };
+
+        // --- Data Logic ---
+        window.loadEmployees = async () => {
+             if (isDemoMode) {
+                const stored = localStorage.getItem('employees');
+                if (stored) window.employeeData = JSON.parse(stored);
+                else {
+                    window.employeeData = [
+                        { docId: '1', id: '2024001', name: '김철수', dept: '생산1팀', position: '대리', baseSalary: 3500000, contractHours: 209, dependents: 3, joinDate: '2018-03-01', empType: 'salary', insurance: true },
+                        { docId: '3', id: '2024003', name: '박민수', dept: '생산2팀', position: '과장', baseSalary: 15000, contractHours: 120, dependents: 4, joinDate: '2015-05-20', empType: 'hourly', insurance: true }, 
+                    ];
+                    localStorage.setItem('employees', JSON.stringify(window.employeeData));
+                }
+                let demoDirty = false;
+                window.employeeData = window.employeeData.map((e) => {
+                    const cleanId = sanitizeEmpId(e.id, '');
+                    if (cleanId !== (e.id || '')) {
+                        demoDirty = true;
+                        return { ...e, id: cleanId };
+                    }
+                    return e;
+                });
+                if (demoDirty) localStorage.setItem('employees', JSON.stringify(window.employeeData));
+            } else {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "employees"));
+                    window.employeeData = [];
+                    const cleanupUpdates = [];
+                    querySnapshot.forEach((docSnap) => {
+                        const row = { ...docSnap.data(), docId: docSnap.id };
+                        const cleanId = sanitizeEmpId(row.id, '');
+                        if (cleanId !== (row.id || '')) cleanupUpdates.push({ docId: row.docId, id: cleanId });
+                        window.employeeData.push({ ...row, id: cleanId });
+                    });
+                    for (const item of cleanupUpdates) await updateDoc(doc(db, "employees", item.docId), { id: item.id });
+                } catch(e) { 
+                    isDemoMode = true; 
+                    loadEmployees(); 
+                    return; 
+                }
+            }
+            renderEmployeeTable();
+            renderPayrollEmpList();
+            updateRetirementSelect();
+        };
+
+        window.renderEmployeeTable = () => {
+            const tbody = document.getElementById('employee-list-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            window.employeeData.forEach((emp, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                let typeBadge = '';
+                let salaryDisplay = '';
+                const bs = Number(emp.baseSalary);
+                if(emp.empType === 'hourly') { typeBadge = '<span class="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 border border-yellow-200">시급</span>'; salaryDisplay = `시급 ${bs.toLocaleString()}원`; } 
+                else if(emp.empType === 'daily') { typeBadge = '<span class="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800 border border-orange-200">일용</span>'; salaryDisplay = `일급 ${bs.toLocaleString()}원`; } 
+                else if(emp.empType === 'contract') { typeBadge = '<span class="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 border border-purple-200">계약</span>'; salaryDisplay = `월급 ${bs.toLocaleString()}원`; } 
+                else { typeBadge = '<span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 border border-blue-200">연봉</span>'; salaryDisplay = `연봉 ${(bs * 12).toLocaleString()}원`; }
+
+                const sourceBadge = emp.sourceSyncLocked ? '<span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 border border-blue-200">외부연동</span>' : '';
+                tr.innerHTML = `<td class="px-8 py-4 whitespace-nowrap"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xs mr-3">${emp.name.charAt(0)}</div><div><div class="text-sm font-bold text-gray-900">${emp.name}${sourceBadge}</div><div class="text-xs text-gray-500">${displayEmpId(emp.id) || '-'}</div></div></div></td><td class="px-8 py-4 whitespace-nowrap"><span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">${emp.dept}</span><span class="text-xs text-gray-500 ml-1">${emp.position}</span></td><td class="px-8 py-4 whitespace-nowrap text-sm text-gray-500">${emp.joinDate || '-'}</td><td class="px-8 py-4 whitespace-nowrap text-sm text-gray-900 text-right"><div class="flex flex-col items-end"><span class="font-medium">${salaryDisplay}</span><span class="text-[10px] text-gray-400 mt-0.5">${emp.contractHours}h / ${typeBadge}</span></div></td><td class="px-8 py-4 whitespace-nowrap text-center"><span class="px-2 py-0.5 rounded text-xs bg-green-50 text-green-700 border border-green-100">재직</span></td><td class="px-8 py-4 whitespace-nowrap text-right text-sm font-medium"><button onclick="editEmployee('${index}')" class="text-brand-600 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded transition-colors"><i class="fa-solid fa-pen mr-1"></i> 수정</button><button onclick="deleteEmployee('${index}')" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition-colors ml-2"><i class="fa-solid fa-trash-can mr-1"></i> 삭제</button></td>`;
+                tbody.appendChild(tr);
+            });
+        };
+        
+        window.openEmployeeModal = (isEdit = false) => {
+            document.getElementById('employee-modal').classList.remove('hidden');
+            if(!isEdit) {
+                document.getElementById('emp-form').reset();
+                document.getElementById('emp-doc-id').value = "";
+                document.getElementById('emp-doc-id').dataset.index = "";
+                document.getElementById('emp-modal-title').innerText = "사원 등록";
+                document.getElementById('emp-type-select').value = "salary";
+                document.getElementById('emp-insurance').checked = true;
+                document.getElementById('calc-daily-hours').value = 8;
+                document.getElementById('calc-weekly-days').value = 5;
+                document.getElementById('emp-fixedOvertimeHours').value = '';
+                autoCalcHours();
+                window.toggleSalaryLabel();
+                setFormFieldLock(false);
+            }
+        };
+
+        window.autoCalcHours = () => {
+            const h = Number(document.getElementById('calc-daily-hours').value) || 0;
+            const d = Number(document.getElementById('calc-weekly-days').value) || 0;
+            const weeklyHours = h * d;
+            let holidayHours = 0; if(weeklyHours >= 15) holidayHours = 8;
+            document.getElementById('calc-contract-hours').value = Math.round((weeklyHours + holidayHours) * 4.345);
+        };
+
+        window.autoCalcSalary = (source) => {
+            const baseEl = document.getElementById('calc-base-salary');
+            const annualEl = document.getElementById('calc-annual-salary');
+            if(source === 'annual') baseEl.value = Math.floor((Number(annualEl.value) || 0) / 12);
+            else annualEl.value = (Number(baseEl.value) || 0) * 12;
+        };
+
+        window.toggleSalaryLabel = () => {
+            const type = document.getElementById('emp-type-select').value;
+            const label = document.getElementById('salary-label');
+            const annualInput = document.getElementById('calc-annual-salary');
+            const inclusiveSec = document.getElementById('inclusive-wage-section');
+            
+            if(type === 'salary') { 
+                label.innerText = "월 기본급 (Monthly)"; 
+                annualInput.disabled = false; 
+                annualInput.placeholder = "0"; 
+                inclusiveSec.classList.remove('hidden');
+            } else { 
+                inclusiveSec.classList.add('hidden');
+                if (type === 'hourly') { label.innerText = "시급 (Hourly Wage)"; annualInput.disabled = false; } // Enable for reverse calc
+                else if (type === 'daily') { label.innerText = "일급 (Daily Wage)"; annualInput.disabled = false; }
+                else { label.innerText = "월 계약금액"; annualInput.disabled = false; }
+            }
+        };
+
+        window.toggleInclusiveInputs = () => {
+            const chk = document.getElementById('emp-isInclusive');
+            const area = document.getElementById('inclusive-inputs');
+            if(chk.checked) area.classList.remove('hidden');
+            else area.classList.add('hidden');
+        }
+
+        window.editEmployee = (index) => {
+            const emp = window.employeeData[index];
+            document.getElementById('emp-modal-title').innerText = "사원 정보 수정";
+            const form = document.getElementById('emp-form');
+            form.name.value = emp.name; form.id.value = displayEmpId(emp.id); form.dept.value = emp.dept; form.position.value = emp.position; 
+            
+            form.empType.value = emp.empType || 'salary';
+            window.toggleSalaryLabel(); // Update UI first
+
+            form.baseSalary.value = emp.baseSalary;
+            if(emp.empType === 'salary') document.getElementById('calc-annual-salary').value = emp.baseSalary * 12;
+            else window.autoCalcSalary('monthly'); // Reverse calc annual for others
+
+            form.contractHours.value = emp.contractHours || 209;
+            form.dependents.value = emp.dependents; form.joinDate.value = emp.joinDate || ''; 
+            document.getElementById('emp-insurance').checked = emp.insurance !== false;
+            form.bankName.value = emp.bankName || ''; form.accountNum.value = emp.accountNum || '';
+            
+            // Inclusive Wage
+            const isInc = emp.isInclusive || false;
+            document.getElementById('emp-isInclusive').checked = isInc;
+            document.getElementById('emp-fixedOvertimeHours').value = emp.fixedOvertimeHours || '';
+            window.toggleInclusiveInputs();
+
+            document.getElementById('emp-doc-id').value = emp.docId || ""; 
+            document.getElementById('emp-doc-id').dataset.index = index;
+            setFormFieldLock(!!emp.sourceSyncLocked);
+            openEmployeeModal(true);
+        };
+
+        window.closeEmployeeModal = () => document.getElementById('employee-modal').classList.add('hidden');
+
+        window.saveEmployee = async () => {
+             const form = document.getElementById('emp-form'); const formData = new FormData(form);
+             const isInc = document.getElementById('emp-isInclusive').checked;
+             const demoIndex = document.getElementById('emp-doc-id').dataset.index;
+             const prevEmp = demoIndex !== undefined && demoIndex !== "" ? window.employeeData[demoIndex] : null;
+             const isLockedSource = !!(prevEmp && prevEmp.sourceSyncLocked);
+             const empData = { 
+                 name: formData.get('name'), id: formData.get('id'), dept: formData.get('dept'), position: formData.get('position'), joinDate: formData.get('joinDate'), 
+                 baseSalary: Number(formData.get('baseSalary')), contractHours: Number(formData.get('contractHours')), dependents: Number(formData.get('dependents')), 
+                 empType: formData.get('empType'), insurance: document.getElementById('emp-insurance').checked, bankName: formData.get('bankName'), accountNum: formData.get('accountNum'),
+                 isInclusive: isInc, fixedOvertimeHours: isInc ? Number(formData.get('fixedOvertimeHours')) : 0
+             };
+             if(isLockedSource) {
+                 empData.name = prevEmp.name;
+                 empData.dept = prevEmp.dept;
+                 empData.position = prevEmp.position;
+                 empData.joinDate = prevEmp.joinDate;
+                 empData.externalSourceId = prevEmp.externalSourceId || '';
+                 empData.sourceSyncLocked = true;
+                 if(!empData.id) empData.id = prevEmp.id;
+             }
+             const docId = document.getElementById('emp-doc-id').value;
+             if (isDemoMode) { if (docId && demoIndex !== undefined && demoIndex !== "") window.employeeData[demoIndex] = { ...empData, docId: docId }; else { empData.docId = Date.now().toString(); window.employeeData.push(empData); } localStorage.setItem('employees', JSON.stringify(window.employeeData)); }
+             else { if (docId) await updateDoc(doc(db, "employees", docId), empData); else await addDoc(collection(db, "employees"), empData); }
+             closeEmployeeModal(); loadEmployees();
+        };
+
+        window.deleteEmployee = async (index) => {
+            if(!confirm("정말 삭제하시겠습니까? 관련 급여 기록은 유지되지만 사원 정보는 복구할 수 없습니다.")) return;
+            const emp = window.employeeData[index];
+            if(isDemoMode) {
+                window.employeeData.splice(index, 1);
+                localStorage.setItem('employees', JSON.stringify(window.employeeData));
+            } else {
+                await deleteDoc(doc(db, "employees", emp.docId));
+            }
+            alert("삭제되었습니다.");
+            loadEmployees();
+        };
+
+        // Rates
+        window.openRateModal = () => {
+            const m = document.getElementById('rate-modal');
+            m.classList.remove('hidden');
+            // Init Values
+            document.getElementById('rate-pension').value = window.payrollRates.pension;
+            document.getElementById('rate-health').value = window.payrollRates.health;
+            document.getElementById('rate-care').value = window.payrollRates.care;
+            document.getElementById('rate-employ').value = window.payrollRates.employ;
+            document.getElementById('config-pay-day').value = window.systemConfig.paymentDay;
+        };
+        window.closeRateModal = () => document.getElementById('rate-modal').classList.add('hidden');
+        window.saveRates = async () => { 
+            const newRates = {
+                pension: Number(document.getElementById('rate-pension').value),
+                health: Number(document.getElementById('rate-health').value),
+                care: Number(document.getElementById('rate-care').value),
+                employ: Number(document.getElementById('rate-employ').value),
+                employer_pension: 4.5, employer_health: 3.545, employer_employ: 1.15, employer_injury: 0.9 
+            };
+            const newPaymentDay = document.getElementById('config-pay-day').value;
+
+            window.payrollRates = newRates;
+            window.systemConfig.paymentDay = newPaymentDay;
+
+            const configData = {
+                paymentDay: newPaymentDay,
+                payrollRates: newRates
+            };
+
+            if(isDemoMode) {
+                const current = JSON.parse(localStorage.getItem('app_config') || '{}');
+                localStorage.setItem('app_config', JSON.stringify({ ...current, ...configData }));
+            } else {
+                try {
+                    await setDoc(doc(db, "config", "settings"), configData, { merge: true });
+                } catch(e) {
+                    alert("설정 저장 실패: " + e.message);
+                    return;
+                }
+            }
+
+            closeRateModal(); 
+            if(window.currentEmployee) calcCurrent(); 
+            updateDashboard();
+            alert("설정이 저장되었습니다."); 
+        };
+        window.changePassword = async () => { 
+            const newPw = document.getElementById('new-password').value;
+            if(!newPw) return alert("새 비밀번호 입력 필요");
+            if(isDemoMode) {
+                const current = JSON.parse(localStorage.getItem('app_config') || '{}');
+                localStorage.setItem('app_config', JSON.stringify({ ...current, password: newPw }));
+            } else {
+                await setDoc(doc(db, "config", "settings"), { password: newPw }, { merge: true });
+            }
+            window.systemConfig.password = newPw;
+            alert("변경됨"); 
+        };
+
+        // Payroll
+        window.loadPayrollStatus = () => window.renderPayrollEmpList();
+        window.renderPayrollEmpList = () => {
+             const list = document.getElementById('payroll-emp-list'); if(!list) return; list.innerHTML = '';
+             window.employeeData.forEach(e => {
+                const li = document.createElement('li'); li.className = "p-3 rounded-lg hover:bg-brand-50 cursor-pointer transition-all border border-transparent hover:border-brand-200 flex justify-between items-center group";
+                li.onclick = () => selectEmployeeForPayroll(window.employeeData.find(x=>x.id==e.id));
+                li.innerHTML = `<div class="flex items-center"><div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 text-xs">${e.name[0]}</div><div><p class="text-sm font-bold text-gray-700">${e.name}</p><p class="text-[10px] text-gray-400">${e.dept}</p></div></div>`;
+                list.appendChild(li);
+            });
+            const countEl = document.getElementById('payroll-count');
+            if(countEl) countEl.innerText=window.employeeData.length+"명";
+        };
+
+        window.selectEmployeeForPayroll = (emp) => {
+            window.currentEmployee = emp; window.editingDocId = null; window.isDeductOverridden = false;
+            document.getElementById('payroll-placeholder').classList.add('hidden');
+            document.getElementById('target-emp-initial').innerText = emp.name[0];
+            document.getElementById('target-emp-name').innerText = emp.name;
+            document.getElementById('target-emp-pos').innerText = emp.position;
+            document.getElementById('target-emp-id').innerText = displayEmpId(emp.id) || '-';
+            
+            const typeSpan = document.getElementById('target-emp-type');
+            if(emp.empType === 'hourly') { typeSpan.innerText = "시급직"; typeSpan.className = "ml-2 text-xs font-semibold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded"; }
+            else if(emp.empType === 'daily') { typeSpan.innerText = "일용직"; typeSpan.className = "ml-2 text-xs font-semibold text-orange-800 bg-orange-100 px-2 py-0.5 rounded"; }
+            else if(emp.empType === 'contract') { typeSpan.innerText = "계약직"; typeSpan.className = "ml-2 text-xs font-semibold text-purple-800 bg-purple-100 px-2 py-0.5 rounded"; }
+            else { typeSpan.innerText = "연봉직"; typeSpan.className = "ml-2 text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded"; }
+            
+            ['inp-ot-time','inp-night-time','inp-holiday-time','inp-bonus','inp-meal', 'inp-vehicle', 'inp-deduction', 'inp-absence-hours', 'inp-memo'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+            const baseTimeEl = document.getElementById('inp-base-time'); if(baseTimeEl) baseTimeEl.value = emp.contractHours || 209;
+            ['inp-meal','inp-vehicle','inp-bonus','inp-deduction','inp-absence-hours'].forEach(id => { const el = document.getElementById(id); if(el) el.value = 0; });
+            ['res-pension-inp', 'res-health-inp', 'res-care-inp', 'res-employ-inp', 'res-tax-inp'].forEach(id => { const el = document.getElementById(id); if(el) { el.readOnly = true; el.classList.remove('manual-override'); } });
+            calcCurrent();
+        };
+
+        window.enableDeductEdit = () => {
+            window.isDeductOverridden = true;
+            ['res-pension-inp', 'res-health-inp', 'res-care-inp', 'res-employ-inp', 'res-tax-inp'].forEach(id => { const el = document.getElementById(id); if(el) { el.readOnly = false; el.classList.add('manual-override'); } });
+            alert("공제액 수동 수정 모드 활성화");
+        };
+
+        window.manualDeductOverride = () => {
+             const p = getValue('res-pension-inp'); const h = getValue('res-health-inp'); const c = getValue('res-care-inp'); const e = getValue('res-employ-inp'); const t = getValue('res-tax-inp');
+             const totalDeduct = p + h + c + e + t;
+             document.getElementById('res-total-deduct').innerText = totalDeduct.toLocaleString();
+             const totalPay = Number(document.getElementById('res-total-pay').innerText.replace(/,/g, ''));
+             document.getElementById('res-net-pay').innerText = (totalPay - totalDeduct).toLocaleString();
+        };
+
+        window.calcCurrent = () => {
+             if (!window.currentEmployee) return;
+             const emp = window.currentEmployee;
+             const baseTime = getValue('inp-base-time') || 209;
+             let basePay = 0, hourlyRate = 0, fixedAllowance = 0;
+
+             // INCLUSIVE WAGE LOGIC
+             if (emp.isInclusive && emp.empType === 'salary') {
+                 const monthlyTotal = Number(emp.baseSalary); // This is Total Monthly
+                 const fixedOT = Number(emp.fixedOvertimeHours) || 0;
+                 // Rate = Total / (BaseTime + FixedOT * 1.5)
+                 hourlyRate = monthlyTotal / (baseTime + fixedOT * 1.5);
+                 basePay = Math.floor(hourlyRate * baseTime);
+                 fixedAllowance = Math.floor(hourlyRate * fixedOT * 1.5);
+             } else {
+                 if (emp.empType === 'hourly') { hourlyRate = Number(emp.baseSalary); basePay = hourlyRate * baseTime; }
+                 else if (emp.empType === 'daily') { hourlyRate = Number(emp.baseSalary) / 8; basePay = hourlyRate * baseTime; }
+                 else { basePay = Number(emp.baseSalary); hourlyRate = basePay / baseTime; }
+             }
+             
+             const ot = getValue('inp-ot-time'); const nt = getValue('inp-night-time'); const ht = getValue('inp-holiday-time');
+             const bonus = getValue('inp-bonus'); const meal = getValue('inp-meal'); const vehicle = getValue('inp-vehicle');
+             const absence = getValue('inp-absence-hours'); const absenceDed = Math.floor(absence * hourlyRate);
+             const manualDed = getValue('inp-deduction');
+             document.getElementById('txt-deduction-calc').value = "-" + absenceDed.toLocaleString();
+             
+             // Inclusive OT Logic
+             let addOT = 0;
+             if (emp.isInclusive && emp.empType === 'salary') {
+                 const fixedOT = Number(emp.fixedOvertimeHours) || 0;
+                 // Only pay for OT exceeding fixed
+                 const realOT = Math.max(0, ot - fixedOT);
+                 addOT = Math.floor(realOT * 1.5 * hourlyRate);
+             } else {
+                 addOT = Math.floor(ot * 1.5 * hourlyRate);
+             }
+
+             const allow = addOT + Math.floor(nt * 0.5 * hourlyRate) + Math.floor(ht * 1.5 * hourlyRate);
+             const totalPay = basePay + fixedAllowance + allow + bonus + meal + vehicle - manualDed - absenceDed;
+             const taxIncome = totalPay - (Math.min(meal, 200000) + Math.min(vehicle, 200000));
+             
+             document.getElementById('res-base').innerText = basePay.toLocaleString();
+             document.getElementById('res-allowance').innerText = (allow + fixedAllowance).toLocaleString(); // Combine fixed + variable OT
+             document.getElementById('res-other').innerText = (meal + vehicle + bonus).toLocaleString();
+             document.getElementById('res-total-pay').innerText = totalPay.toLocaleString();
+             
+             const dedRow = document.getElementById('row-deduction');
+             if(manualDed + absenceDed > 0) { dedRow.classList.remove('hidden'); document.getElementById('res-deduction-disp').innerText = "-" + (manualDed + absenceDed).toLocaleString(); }
+             else dedRow.classList.add('hidden');
+
+             if(!window.isDeductOverridden) {
+                 let p = 0, h = 0, c = 0, e = 0, t = 0;
+                 if(emp.insurance !== false) {
+                     const r = window.payrollRates;
+                     p = Math.floor(taxIncome * (r.pension / 100)); if(p>265500) p=265500;
+                     h = Math.floor(taxIncome * (r.health / 100));
+                     c = Math.floor(h * (r.care / 100));
+                     e = Math.floor(taxIncome * (r.employ / 100));
+                     let taxBase = Math.floor(taxIncome * 0.03); taxBase -= (emp.dependents * 10000); if(taxBase<0) taxBase=0;
+                     t = Math.floor(taxBase/10)*10 + Math.floor((Math.floor(taxBase/10)*10)*0.1);
+                 }
+                 document.getElementById('res-pension-inp').value = p; document.getElementById('res-health-inp').value = h; document.getElementById('res-care-inp').value = c; document.getElementById('res-employ-inp').value = e; document.getElementById('res-tax-inp').value = t;
+                 const totalDed = p + h + c + e + t;
+                 document.getElementById('res-total-deduct').innerText = totalDed.toLocaleString();
+                 document.getElementById('res-net-pay').innerText = (totalPay - totalDed).toLocaleString();
+             } else {
+                 manualDeductOverride();
+             }
+        };
+
+        window.savePayroll = async () => {
+             const msg = window.editingDocId ? "수정하시겠습니까?" : "확정하시겠습니까?"; if (!confirm(msg)) return;
+             const month = document.getElementById('payroll-month').value;
+             const empId = window.currentEmployee.id;
+             
+             if (!window.editingDocId) {
+                 let exists = false;
+                 if(isDemoMode) { const h = JSON.parse(localStorage.getItem('payroll_history')||'[]'); exists = h.some(r => r.month === month && r.empId === empId); }
+                 else { const q = query(collection(db, "payroll_records"), where("month", "==", month), where("empId", "==", empId)); const s = await getDocs(q); exists = !s.empty; }
+                 if(exists) return alert("이미 존재합니다.");
+             }
+
+             // Save Logic adjusted for inclusive wage
+             const emp = window.currentEmployee;
+             const baseTime = getValue('inp-base-time') || 209;
+             let basePay = 0, hourlyRate = 0, fixedAllowance = 0;
+             if (emp.isInclusive && emp.empType === 'salary') {
+                 const monthlyTotal = Number(emp.baseSalary); const fixedOT = Number(emp.fixedOvertimeHours) || 0;
+                 hourlyRate = monthlyTotal / (baseTime + fixedOT * 1.5);
+                 basePay = Math.floor(hourlyRate * baseTime);
+                 fixedAllowance = Math.floor(hourlyRate * fixedOT * 1.5);
+             } else {
+                  // Standard Logic Re-calc for record saving safety
+                 if (emp.empType === 'hourly') { hourlyRate = Number(emp.baseSalary); basePay = hourlyRate * baseTime; }
+                 else if (emp.empType === 'daily') { hourlyRate = Number(emp.baseSalary) / 8; basePay = hourlyRate * baseTime; }
+                 else { basePay = Number(emp.baseSalary); hourlyRate = basePay / baseTime; }
+             }
+
+             const record = {
+                 month, empId, empName: window.currentEmployee.name, 
+                 baseSalary: basePay, // Store calculated base
+                 fixedAllowance: fixedAllowance, // Store calculated fixed OT
+                 empType: window.currentEmployee.empType,
+                 inputs: { baseTime: getValue('inp-base-time'), otTime: getValue('inp-ot-time'), nightTime: getValue('inp-night-time'), holidayTime: getValue('inp-holiday-time'), bonus: getValue('inp-bonus'), meal: getValue('inp-meal'), vehicle: getValue('inp-vehicle'), deduction: getValue('inp-deduction'), absenceHours: getValue('inp-absence-hours'), memo: document.getElementById('inp-memo').value, pension: getValue('res-pension-inp'), health: getValue('res-health-inp'), care: getValue('res-care-inp'), employ: getValue('res-employ-inp'), tax: getValue('res-tax-inp'), isOverridden: window.isDeductOverridden },
+                 totalPay: Number(document.getElementById('res-total-pay').innerText.replace(/,/g, '')), totalDeduct: Number(document.getElementById('res-total-deduct').innerText.replace(/,/g, '')), netPay: Number(document.getElementById('res-net-pay').innerText.replace(/,/g, '')), createdAt: new Date().toISOString()
+             };
+
+             if (isDemoMode) {
+                 let h = JSON.parse(localStorage.getItem('payroll_history') || '[]');
+                 if (window.editingDocId) { const idx = h.findIndex(r => r.docId === window.editingDocId); if(idx > -1) h[idx] = { ...record, docId: window.editingDocId }; }
+                 else { record.docId = Date.now().toString(); h.push(record); }
+                 localStorage.setItem('payroll_history', JSON.stringify(h));
+             } else {
+                 if (window.editingDocId) await updateDoc(doc(db, "payroll_records", window.editingDocId), record);
+                 else await addDoc(collection(db, "payroll_records"), record);
+             }
+             alert("저장완료"); document.getElementById('payroll-placeholder').classList.remove('hidden'); window.editingDocId = null; updateDashboard();
+        };
+
+        // 7. Retirement (Restored & Connected)
+        window.updateRetirementSelect = () => {
+             const sel = document.getElementById('ret-emp-select'); if(!sel) return; sel.innerHTML = '<option value="">사원을 선택하세요</option>';
+             window.employeeData.forEach((emp, i) => { const opt = document.createElement('option'); opt.value = i; opt.text = `${emp.name} (${emp.dept})`; sel.appendChild(opt); });
+        };
+        window.onRetirementEmpChange = () => {
+             const idx = document.getElementById('ret-emp-select').value; if(idx === "") return;
+             const emp = window.employeeData[idx];
+             const startEl = document.getElementById('ret-start-date'); if(startEl) startEl.value = emp.joinDate || "";
+             calcRetDays();
+        };
+        const retEnd = document.getElementById('ret-end-date'); if(retEnd) retEnd.addEventListener('change', calcRetDays);
+        function calcRetDays() {
+             const s = document.getElementById('ret-start-date').value; const e = document.getElementById('ret-end-date').value;
+             if (s && e) { const diff = Math.ceil((new Date(e) - new Date(s)) / (1000 * 60 * 60 * 24)); const d = document.getElementById('ret-days-display'); if(d) d.innerText = diff > 0 ? diff + " 일" : "확인필요"; }
+        };
+        window.calcRetirement = () => {
+             const t = Number(document.getElementById('ret-3month-total').value); const s = document.getElementById('ret-start-date').value; const e = document.getElementById('ret-end-date').value;
+             if(!t || !s || !e) return alert("정보부족");
+             const days = Math.ceil((new Date(e) - new Date(s)) / (1000 * 60 * 60 * 24));
+             const avg = Math.floor(t/90); const ret = Math.floor(avg * 30 * (days/365));
+             document.getElementById('ret-avg-daily').innerText = avg.toLocaleString() + " 원"; document.getElementById('ret-result').innerText = ret.toLocaleString();
+        };
+
+        // 8. History & Delete (Restored)
+        window.loadHistory = async () => {
+             const month = document.getElementById('history-month').value; window.historyData = [];
+             if (isDemoMode) { const all = JSON.parse(localStorage.getItem('payroll_history') || '[]'); window.historyData = all.filter(r => r.month === month); }
+             else { try { const q = query(collection(db, "payroll_records"), where("month", "==", month)); const s = await getDocs(q); s.forEach(d => window.historyData.push({ ...d.data(), docId: d.id })); } catch(e) { isDemoMode = true; loadHistory(); return; } }
+             
+             const tbody = document.getElementById('history-list-body'); if(!tbody) return; tbody.innerHTML = '';
+             if (window.historyData.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">데이터가 없습니다.</td></tr>'; return; }
+             window.historyData.forEach((rec, idx) => {
+                 const tr = document.createElement('tr');
+                 tr.innerHTML = `<td class="px-6 py-4 text-left font-bold text-gray-700">${rec.empName}</td><td class="px-6 py-4 text-right text-gray-500">${Number(rec.baseSalary).toLocaleString()}</td><td class="px-6 py-4 text-right text-blue-600 font-medium">${(rec.totalPay - rec.baseSalary).toLocaleString()}</td><td class="px-6 py-4 text-right font-bold text-gray-800">${rec.totalPay.toLocaleString()}</td><td class="px-6 py-4 text-right text-red-500">${rec.totalDeduct.toLocaleString()}</td><td class="px-6 py-4 text-right font-bold text-brand-700">${rec.netPay.toLocaleString()}</td><td class="px-6 py-4 text-center space-x-2"><button onclick="editHistoryRecord('${idx}')" class="px-2 py-1 border rounded text-xs hover:bg-gray-50"><i class="fa-solid fa-pen"></i></button><button onclick="deleteHistoryRecord('${idx}')" class="px-2 py-1 border border-red-200 text-red-600 rounded text-xs hover:bg-red-50"><i class="fa-solid fa-trash"></i></button></td>`;
+                 tbody.appendChild(tr);
+             });
+        };
+        window.deleteHistoryRecord = async (idx) => {
+            if(!confirm("삭제하시겠습니까?")) return;
+            const rec = window.historyData[idx];
+            if(isDemoMode) { let h = JSON.parse(localStorage.getItem('payroll_history')||'[]'); h = h.filter(r => r.docId !== rec.docId); localStorage.setItem('payroll_history', JSON.stringify(h)); }
+            else { await deleteDoc(doc(db, "payroll_records", rec.docId)); }
+            alert("삭제됨"); loadHistory(); updateDashboard();
+        };
+        window.editHistoryRecord = (idx) => { 
+            const rec = window.historyData[idx]; const emp = window.employeeData.find(e => e.id === rec.empId); if(!emp) return alert("사원정보 없음");
+            router('payroll'); document.getElementById('payroll-month').value = rec.month; window.editingDocId = rec.docId; window.currentEmployee = emp;
+            document.getElementById('payroll-placeholder').classList.add('hidden');
+            document.getElementById('target-emp-initial').innerText = emp.name[0]; document.getElementById('target-emp-name').innerText = emp.name;
+            const i = rec.inputs;
+            const s = (id, v) => { const e = document.getElementById(id); if(e) e.value = v; };
+            s('inp-base-time', i.baseTime); s('inp-ot-time', i.otTime); s('inp-night-time', i.nightTime); s('inp-holiday-time', i.holidayTime); s('inp-bonus', i.bonus); s('inp-meal', i.meal); s('inp-vehicle', i.vehicle); s('inp-deduction', i.deduction); s('inp-absence-hours', i.absenceHours); s('inp-memo', i.memo);
+            if(i.isOverridden) { window.isDeductOverridden = true; enableDeductEdit(); s('res-pension-inp', i.pension); s('res-health-inp', i.health); s('res-care-inp', i.care); s('res-employ-inp', i.employ); s('res-tax-inp', i.tax); }
+            else window.isDeductOverridden = false;
+            document.getElementById('btn-save-payroll').innerHTML = "수정 완료"; calcCurrent();
+        };
+
+        // 9. Dashboard (Restored)
+        window.updateDashboard = async () => {
+            let recs = [];
+            if(isDemoMode) recs = JSON.parse(localStorage.getItem('payroll_history')||'[]');
+            else { const q = query(collection(db, "payroll_records")); const s = await getDocs(q); s.forEach(d => recs.push(d.data())); }
+            
+            document.getElementById('dash-total-emp').innerText = window.employeeData.length;
+            const totalBase = window.employeeData.reduce((a,c) => a+Number(c.baseSalary), 0);
+            const estCost = Math.floor(totalBase * 1.1); 
+            document.getElementById('dash-total-cost').innerText = estCost.toLocaleString() + " 원";
+            
+            const curMonth = new Date().toISOString().slice(0, 7);
+            const processed = recs.filter(r => r.month === curMonth).length;
+            const pct = window.employeeData.length ? Math.round((processed/window.employeeData.length)*100) : 0;
+            document.getElementById('dash-processed').innerText = pct + "%";
+            document.getElementById('dash-progress-bar-sm').style.width = pct + "%";
+            
+            const pd = parseInt(window.systemConfig.paymentDay); const today = new Date();
+            let target = new Date(today.getFullYear(), today.getMonth(), pd);
+            if(today > target) target.setMonth(target.getMonth()+1);
+            const diff = Math.ceil((target - today)/(1000*60*60*24));
+            document.getElementById('dash-d-day').innerText = `D-${diff}`;
+            document.getElementById('dash-pay-day').innerText = window.systemConfig.paymentDay;
+
+            // Charts
+            const ctxT = document.getElementById('chart-trend');
+            if(ctxT) {
+                 if(trendChart) trendChart.destroy();
+                 const labels = [], d1 = [], d2 = [], dOvertime = [];
+                 const now = new Date();
+                 for(let i=5; i>=0; i--) { 
+                     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                     const k = d.toISOString().slice(0,7); 
+                     labels.push(k.slice(5)+'월');
+                     const mRecs = recs.filter(r => r.month === k);
+                     d1.push(mRecs.reduce((a,r)=>a+(r.totalPay||0),0)/10000); 
+                     d2.push(mRecs.reduce((a,r)=>a+(r.totalDeduct||0),0)/10000);
+                     const totalOT = mRecs.reduce((a, r) => a + (r.inputs?.otTime || 0), 0);
+                     dOvertime.push(mRecs.length ? (totalOT / mRecs.length).toFixed(1) : 0);
+                 }
+                 trendChart = new Chart(ctxT, { type: 'bar', data: { labels, datasets: [{ label: '지급(만)', data: d1, backgroundColor: '#0ea5e9' }, { label: '공제(만)', data: d2, backgroundColor: '#94a3b8' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } } } } });
+
+                 const ctxOver = document.getElementById('chart-overtime');
+                 if(ctxOver) {
+                     if(overtimeChart) overtimeChart.destroy();
+                     overtimeChart = new Chart(ctxOver, { type: 'line', data: { labels, datasets: [{ label: '평균 연장근로 (시간)', data: dOvertime, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+                 }
+            }
+
+            const ctxD = document.getElementById('chart-dept');
+            if(ctxD) {
+                if(deptChart) deptChart.destroy();
+                const depts = {}; window.employeeData.forEach(e => depts[e.dept] = (depts[e.dept]||0)+1);
+                deptChart = new Chart(ctxD, { type: 'doughnut', data: { labels: Object.keys(depts), datasets: [{ data: Object.values(depts), backgroundColor: ['#0ea5e9', '#6366f1', '#10b981', '#f59e0b', '#ec4899'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } } });
+                const leg = document.getElementById('dash-dept-legend');
+                if(leg) { leg.innerHTML = ''; Object.keys(depts).forEach((d, i) => { leg.innerHTML += `<div class="flex justify-between text-xs"><span>${d}</span><span class="font-bold">${depts[d]}명</span></div>`; }); }
+            }
+
+            const ctxC = document.getElementById('chart-composition');
+            if(ctxC) {
+                if(compChart) compChart.destroy();
+                const currentRecs = recs.filter(r => r.month === curMonth);
+                let sumBase = 0, sumTotal = 0, sumDeduct = 0;
+                if(currentRecs.length > 0) { sumBase = currentRecs.reduce((a, r) => a + (Number(r.baseSalary)||0), 0); sumTotal = currentRecs.reduce((a, r) => a + (r.totalPay||0), 0); sumDeduct = currentRecs.reduce((a, r) => a + (r.totalDeduct||0), 0); } 
+                else { sumBase = window.employeeData.reduce((a, r) => a + (Number(r.baseSalary)||0), 0); sumTotal = sumBase; sumDeduct = sumBase * 0.1; }
+                const sumAllow = Math.max(0, sumTotal - sumBase);
+                compChart = new Chart(ctxC, { type: 'pie', data: { labels: ['기본급', '수당', '공제'], datasets: [{ data: [sumBase, sumAllow, sumDeduct], backgroundColor: ['#0ea5e9', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+            }
+        };
+
+        // --- NEW: Payslip Logic (Updated Render) ---
+        window.loadPayslipList = async () => {
+             const month = document.getElementById('payslip-month').value;
+             let records = [];
+             if (isDemoMode) { const all = JSON.parse(localStorage.getItem('payroll_history') || '[]'); records = all.filter(r => r.month === month); }
+             else { try { const q = query(collection(db, "payroll_records"), where("month", "==", month)); const s = await getDocs(q); s.forEach(d => records.push(d.data())); } catch(e) { isDemoMode = true; loadPayslipList(); return; } }
+             window.cachedPayslipData = records;
+             const list = document.getElementById('payslip-emp-list'); list.innerHTML = '';
+             if(records.length === 0) { list.innerHTML = '<li class="p-4 text-center text-xs text-gray-400">데이터 없음</li>'; return; }
+             records.forEach((rec, idx) => {
+                 const li = document.createElement('li'); li.className = "p-3 border rounded-lg hover:bg-brand-50 cursor-pointer flex justify-between items-center bg-white";
+                li.onclick = () => renderPayslip(idx); li.innerHTML = `<div><p class="font-bold text-sm text-gray-800">${rec.empName}</p><p class="text-xs text-gray-500">${displayEmpId(rec.empId) || '-'}</p></div>`; list.appendChild(li);
+             });
+        };
+        window.renderPayslip = (idx) => {
+            const rec = window.cachedPayslipData[idx]; if(!rec) return;
+            const emp = window.employeeData.find(e => e.id === rec.empId) || { dept: '-', position: '-' }; const inputs = rec.inputs || {};
+            document.getElementById('printable-area').classList.remove('hidden'); document.getElementById('payslip-placeholder').classList.add('hidden');
+            document.getElementById('ps-title-month').innerText = `${rec.month} 급여명세서`;
+            document.getElementById('ps-id').innerText = displayEmpId(rec.empId) || '-'; document.getElementById('ps-name').innerText = rec.empName; document.getElementById('ps-dept').innerText = emp.dept; document.getElementById('ps-pos').innerText = emp.position; document.getElementById('ps-date').innerText = window.systemConfig.paymentDay + "일";
+            
+            const payBody = document.getElementById('ps-pay-body');
+            const fixedAllowance = rec.fixedAllowance || 0;
+            const varAllowance = Math.floor(rec.totalPay - Number(rec.baseSalary) - fixedAllowance - (inputs.meal||0) - (inputs.vehicle||0) - (inputs.bonus||0));
+            
+            payBody.innerHTML = `<tr><td>기본급</td><td class="text-right">${Number(rec.baseSalary).toLocaleString()}</td></tr>
+            ${fixedAllowance > 0 ? `<tr><td>고정연장수당</td><td class="text-right">${fixedAllowance.toLocaleString()}</td></tr>` : ''}
+            <tr><td>초과근무수당</td><td class="text-right">${varAllowance.toLocaleString()}</td></tr>
+            <tr><td>식대</td><td class="text-right">${(inputs.meal||0).toLocaleString()}</td></tr>
+            <tr><td>차량유지비</td><td class="text-right">${(inputs.vehicle||0).toLocaleString()}</td></tr>
+            <tr><td>상여/성과급</td><td class="text-right">${(inputs.bonus||0).toLocaleString()}</td></tr>`;
+            document.getElementById('ps-total-pay').innerText = rec.totalPay.toLocaleString();
+            
+            const dedBody = document.getElementById('ps-deduct-body');
+            dedBody.innerHTML = `<tr><td>국민연금</td><td class="text-right">${(inputs.pension||0).toLocaleString()}</td></tr><tr><td>건강보험</td><td class="text-right">${(inputs.health||0).toLocaleString()}</td></tr><tr><td>장기요양</td><td class="text-right">${(inputs.care||0).toLocaleString()}</td></tr><tr><td>고용보험</td><td class="text-right">${(inputs.employ||0).toLocaleString()}</td></tr><tr><td>소득세(지방세포함)</td><td class="text-right">${(inputs.tax||0).toLocaleString()}</td></tr><tr><td>기타 공제</td><td class="text-right">${((inputs.deduction||0) + Math.floor((inputs.absenceHours||0)*(rec.baseSalary/(inputs.baseTime||209)))).toLocaleString()}</td></tr>`;
+            document.getElementById('ps-total-deduct').innerText = rec.totalDeduct.toLocaleString();
+            document.getElementById('ps-net-pay').innerText = rec.netPay.toLocaleString() + " 원";
+        };
+        window.printPayslip = () => { if(document.getElementById('printable-area').classList.contains('hidden')) alert("선택필요"); else window.print(); };
+    </script>
+</body>
+</html>
