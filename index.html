@@ -180,7 +180,7 @@
                 <div id="view-dashboard" class="space-y-6 pb-10">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Total Headcount</p><h3 class="text-3xl font-bold text-gray-800 mt-1" id="dash-total-emp">0</h3></div><div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-users text-lg"></i></div></div></div>
-                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Est. Monthly Cost</p><h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-total-cost">0 원</h3></div><div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-money-bill-trend-up text-lg"></i></div></div></div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">This Month Payroll</p><h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-total-cost">0 원</h3></div><div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-money-bill-trend-up text-lg"></i></div></div></div>
                         <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Payroll Status</p><h3 class="text-3xl font-bold text-gray-800 mt-1" id="dash-processed">0%</h3></div><div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-list-check text-lg"></i></div></div><div class="w-full bg-gray-100 rounded-full h-1.5 mt-2"><div id="dash-progress-bar-sm" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div></div></div>
                         <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-4"><div><p class="text-xs font-bold text-gray-400 uppercase">Payment D-Day</p><h3 class="text-3xl font-bold text-brand-600 mt-1" id="dash-d-day">D-?</h3></div><div class="p-2.5 bg-brand-50 text-brand-600 rounded-lg"><i class="fa-regular fa-calendar-check text-lg"></i></div></div><div class="flex items-center text-xs"><span class="text-gray-400">지급예정일: 매월 <span id="dash-pay-day">25</span>일</span></div></div>
                     </div>
@@ -190,7 +190,7 @@
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">월별 평균 초과근무 시간 추이 (시간)</h3><div class="relative h-64 w-full"><canvas id="chart-overtime"></canvas></div></div>
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">이번 달 급여 구성비 (추계)</h3><div class="relative h-64 w-full flex justify-center"><canvas id="chart-composition"></canvas></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><h3 class="text-sm font-bold text-gray-800 mb-6">이번 달 급여 구성비</h3><div class="relative h-64 w-full flex justify-center"><canvas id="chart-composition"></canvas></div></div>
                     </div>
                 </div>
 
@@ -288,7 +288,34 @@
                 <div id="view-history" class="hidden space-y-6">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                         <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white"><h3 class="text-lg font-bold text-gray-900">급여 대장 조회</h3><button onclick="window.print()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 text-gray-700 font-medium"><i class="fa-solid fa-print mr-2"></i> 인쇄</button></div>
-                        <div class="p-6 border-b border-gray-100 bg-gray-50"><div class="flex items-center"><label class="text-sm font-bold text-gray-700 mr-3">조회 년월</label><input type="month" id="history-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2"><button onclick="loadHistory()" class="ml-3 px-5 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 shadow-md"><i class="fa-solid fa-magnifying-glass mr-1"></i> 검색</button></div></div>
+                        <div class="p-6 border-b border-gray-100 bg-gray-50 space-y-4">
+                            <div class="flex items-center flex-wrap gap-2">
+                                <label class="text-sm font-bold text-gray-700 mr-1">조회 년월</label><input type="month" id="history-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2">
+                                <button onclick="loadHistory()" class="ml-1 px-5 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 shadow-md"><i class="fa-solid fa-magnifying-glass mr-1"></i> 검색</button>
+                                <span id="history-lock-state" class="ml-2 inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600">잠금 상태 확인중</span>
+                                <button id="history-lock-btn" onclick="toggleHistoryMonthLock()" class="px-3 py-2 border border-amber-300 text-amber-700 bg-amber-50 rounded-lg text-xs font-bold hover:bg-amber-100"><i class="fa-solid fa-lock mr-1"></i> 월 잠금</button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                                <input id="hf-emp-name" type="text" placeholder="사원명 검색" class="border-gray-300 rounded-lg text-xs py-2">
+                                <input id="hf-dept" type="text" placeholder="부서" class="border-gray-300 rounded-lg text-xs py-2">
+                                <input id="hf-position" type="text" placeholder="직급" class="border-gray-300 rounded-lg text-xs py-2">
+                                <input id="hf-min-pay" type="number" placeholder="지급총액 최소" class="border-gray-300 rounded-lg text-xs py-2 text-right">
+                                <input id="hf-max-pay" type="number" placeholder="지급총액 최대" class="border-gray-300 rounded-lg text-xs py-2 text-right">
+                                <select id="hf-sort" class="border-gray-300 rounded-lg text-xs py-2">
+                                    <option value="name_asc">정렬: 이름순</option>
+                                    <option value="total_desc">정렬: 지급총액 높은순</option>
+                                    <option value="net_desc">정렬: 실수령액 높은순</option>
+                                    <option value="deduct_rate_desc">정렬: 공제율 높은순</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                <input id="hf-min-deduct" type="number" placeholder="공제총액 최소" class="border-gray-300 rounded-lg text-xs py-2 text-right">
+                                <input id="hf-max-deduct" type="number" placeholder="공제총액 최대" class="border-gray-300 rounded-lg text-xs py-2 text-right">
+                                <button onclick="refreshHistoryView()" class="px-4 py-2 bg-slate-700 text-white text-xs font-bold rounded-lg hover:bg-slate-600"><i class="fa-solid fa-filter mr-1"></i> 필터 적용</button>
+                                <button onclick="resetHistoryFilters()" class="px-4 py-2 border border-gray-300 text-xs font-bold rounded-lg hover:bg-gray-100">필터 초기화</button>
+                            </div>
+                        </div>
+                        <div id="history-close-report" class="mx-6 mt-5 mb-1 p-4 border rounded-lg bg-blue-50 border-blue-200 text-xs text-blue-900"></div>
                         <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-100 text-sm"><thead class="bg-gray-50"><tr><th class="px-6 py-4 text-left font-bold text-gray-500">사원정보</th><th class="px-6 py-4 text-right font-bold text-gray-500">기본급</th><th class="px-6 py-4 text-right font-bold text-blue-600">수당합계</th><th class="px-6 py-4 text-right font-bold text-gray-800">지급총액</th><th class="px-6 py-4 text-right font-bold text-red-600">공제총액</th><th class="px-6 py-4 text-right font-bold text-brand-700">실수령액</th><th class="px-6 py-4 text-center font-bold text-gray-500">관리</th></tr></thead>
                                 <tbody id="history-list-body" class="bg-white divide-y divide-gray-100"></tbody>
                             </table>
@@ -302,7 +329,7 @@
                         <div class="lg:col-span-4 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden"><div class="p-5 border-b border-gray-100 bg-gray-50"><label class="block text-xs font-bold text-gray-500 uppercase mb-2">명세서 조회 년월</label><div class="flex gap-2"><div class="relative flex-1"><input type="month" id="payslip-month" class="block w-full pl-10 border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 text-sm py-2.5"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-regular fa-calendar text-gray-400"></i></div></div><button onclick="loadPayslipList()" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700">조회</button></div></div><div class="flex-1 overflow-y-auto p-3"><ul id="payslip-emp-list" class="space-y-2"></ul></div></div>
                         <div class="lg:col-span-8 bg-slate-100 rounded-xl shadow-inner border border-gray-200 flex flex-col h-full overflow-hidden p-6 relative">
                             <div class="absolute top-4 right-6 z-10 no-print"><button onclick="printPayslip()" class="flex items-center px-4 py-2 bg-white text-brand-700 font-bold text-sm rounded-lg shadow hover:bg-brand-50 border border-brand-200"><i class="fa-solid fa-print mr-2"></i> 명세서 인쇄</button></div>
-                            <div class="flex-1 overflow-auto flex justify-center"><div id="printable-area" class="bg-white shadow-lg w-full max-w-[210mm] min-h-[297mm] p-10 box-border text-slate-800 hidden"><div class="text-center mb-8 border-b-2 border-slate-800 pb-4"><h1 class="text-2xl font-bold tracking-widest mb-1">급 여 명 세 서</h1><p class="text-sm text-gray-500" id="ps-title-month">2026년 01월분</p></div><table class="w-full text-sm mb-8 payslip-table"><tr><th class="w-24 bg-gray-50">사번</th><td id="ps-id"></td><th class="w-24 bg-gray-50">성명</th><td id="ps-name"></td><th class="w-24 bg-gray-50">부서</th><td id="ps-dept"></td></tr><tr><th class="bg-gray-50">직급</th><td id="ps-pos"></td><th class="bg-gray-50">지급일</th><td id="ps-date"></td><th class="bg-gray-50">생년월일</th><td>******</td></tr></table>
+                            <div class="flex-1 overflow-auto flex justify-center"><div id="printable-area" class="bg-white shadow-lg w-full max-w-[210mm] min-h-[297mm] p-10 box-border text-slate-800 hidden"><div class="text-center mb-8 border-b-2 border-slate-800 pb-4"><h1 class="text-2xl font-bold tracking-widest mb-1">급 여 명 세 서</h1><p class="text-sm text-gray-500" id="ps-title-month">2026년 01월분</p></div><table class="w-full text-sm mb-8 payslip-table"><tr><th class="w-24 bg-gray-50">사번</th><td id="ps-id"></td><th class="w-24 bg-gray-50">성명</th><td id="ps-name"></td><th class="w-24 bg-gray-50">부서</th><td id="ps-dept"></td></tr><tr><th class="bg-gray-50">직급</th><td id="ps-pos"></td><th class="bg-gray-50">지급일</th><td id="ps-date"></td><th class="bg-gray-50">생년월일</th><td id="ps-birth">-</td></tr></table>
                             <!-- Balanced Grid for Print -->
                             <div class="print-grid grid grid-cols-2 gap-4 mb-8">
                                 <div class="print-col"><table class="w-full text-sm payslip-table"><thead><tr><th colspan="2" class="bg-blue-50 text-blue-800 border-blue-200">지급 내역</th></tr><tr><th class="w-1/2">항목</th><th>금액</th></tr></thead><tbody id="ps-pay-body"></tbody><tfoot><tr class="bg-blue-50 font-bold"><td class="text-center">지급 총액</td><td class="text-right" id="ps-total-pay">0</td></tr></tfoot></table></div>
@@ -350,7 +377,7 @@
 
                             <div class="grid grid-cols-2 gap-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">이름</label><input type="text" name="name" required class="w-full border-gray-300 rounded-lg text-sm"></div><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">사번</label><input type="text" name="id" required class="w-full border-gray-300 rounded-lg text-sm"></div></div>
                             <div class="grid grid-cols-2 gap-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">부서</label><input type="text" name="dept" class="w-full border-gray-300 rounded-lg text-sm"></div><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">직급</label><input type="text" name="position" class="w-full border-gray-300 rounded-lg text-sm"></div></div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">입사일</label><input type="date" name="joinDate" required class="w-full border-gray-300 rounded-lg text-sm"></div>
+                            <div class="grid grid-cols-2 gap-5"><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">입사일</label><input type="date" name="joinDate" required class="w-full border-gray-300 rounded-lg text-sm"></div><div><label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase">생년월일</label><input type="date" name="birthDate" class="w-full border-gray-300 rounded-lg text-sm"></div></div>
                             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                 <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">근무 조건 (소정근로시간 자동 산출)</label>
                                 <div class="grid grid-cols-3 gap-3 mb-2">
@@ -436,7 +463,7 @@
         window.employeeData = [];
         window.editingDocId = null;
         window.historyData = [];
-        window.systemConfig = { paymentDay: '25', password: 'admin1234' };
+        window.systemConfig = { paymentDay: '25', password: 'admin1234', lockedMonths: [] };
         window.payrollRates = { pension: 4.5, health: 3.60, care: 13.20, employ: 0.9, employer_pension: 4.5, employer_health: 3.60, employer_employ: 1.15, employer_injury: 0.9 };
         window.isDeductOverridden = false;
         window.sourceSyncRuntime = { started: false, isApplying: false, lastDigest: '', pollId: null, unsubs: [] };
@@ -469,6 +496,7 @@
                         if(d.paymentDay) window.systemConfig.paymentDay = d.paymentDay;
                         if(d.payrollRates) window.payrollRates = d.payrollRates;
                         if(d.password) window.systemConfig.password = d.password;
+                        if(Array.isArray(d.lockedMonths)) window.systemConfig.lockedMonths = d.lockedMonths;
                     }
                 } catch(e) {}
             } else {
@@ -476,9 +504,72 @@
                  if(local.paymentDay) window.systemConfig.paymentDay = local.paymentDay;
                  if(local.payrollRates) window.payrollRates = local.payrollRates;
                  if(local.password) window.systemConfig.password = local.password;
+                 if(Array.isArray(local.lockedMonths)) window.systemConfig.lockedMonths = local.lockedMonths;
             }
         };
         initConfig();
+
+        const persistConfigPatch = async (patch) => {
+            if(isDemoMode) {
+                const current = JSON.parse(localStorage.getItem('app_config') || '{}');
+                localStorage.setItem('app_config', JSON.stringify({ ...current, ...patch }));
+                return true;
+            }
+            try {
+                await setDoc(doc(db, "config", "settings"), patch, { merge: true });
+                return true;
+            } catch(e) {
+                alert("설정 저장 실패: " + e.message);
+                return false;
+            }
+        };
+        const isMonthLocked = (month) => Array.isArray(window.systemConfig.lockedMonths) && window.systemConfig.lockedMonths.includes(month);
+        const getDeductRate = (rec) => {
+            const totalPay = Number(rec?.totalPay) || 0;
+            const totalDeduct = Number(rec?.totalDeduct) || 0;
+            if (totalPay <= 0) return 0;
+            return totalDeduct / totalPay;
+        };
+        const getRecordEmpKey = (rec) => {
+            if (rec?.empKey) return String(rec.empKey);
+            const cleanEmpId = displayEmpId(rec?.empId) || '';
+            if (cleanEmpId) return `ID:${cleanEmpId}`;
+            return `NAME:${String(rec?.empName || '').trim()}|${String(rec?.empDept || '').trim()}`;
+        };
+        const updateHistoryLockUi = (month) => {
+            const stateEl = document.getElementById('history-lock-state');
+            const btnEl = document.getElementById('history-lock-btn');
+            if(!stateEl || !btnEl) return;
+            const locked = isMonthLocked(month);
+            if (locked) {
+                stateEl.className = "ml-2 inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700";
+                stateEl.innerHTML = '<i class="fa-solid fa-lock mr-1"></i>잠금됨';
+                btnEl.innerHTML = '<i class="fa-solid fa-lock-open mr-1"></i> 잠금 해제';
+                btnEl.className = "px-3 py-2 border border-green-300 text-green-700 bg-green-50 rounded-lg text-xs font-bold hover:bg-green-100";
+            } else {
+                stateEl.className = "ml-2 inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600";
+                stateEl.innerHTML = '<i class="fa-solid fa-lock-open mr-1"></i>열림';
+                btnEl.innerHTML = '<i class="fa-solid fa-lock mr-1"></i> 월 잠금';
+                btnEl.className = "px-3 py-2 border border-amber-300 text-amber-700 bg-amber-50 rounded-lg text-xs font-bold hover:bg-amber-100";
+            }
+        };
+        window.toggleHistoryMonthLock = async () => {
+            const month = document.getElementById('history-month')?.value;
+            if(!month) return alert("잠금할 조회 년월을 먼저 선택해주세요.");
+            const locked = isMonthLocked(month);
+            const msg = locked ? `${month} 잠금을 해제하시겠습니까?` : `${month}을(를) 잠그시겠습니까?\n잠금 시 저장/수정/삭제가 차단됩니다.`;
+            if(!confirm(msg)) return;
+            const current = Array.isArray(window.systemConfig.lockedMonths) ? [...window.systemConfig.lockedMonths] : [];
+            let next = [];
+            if (locked) next = current.filter(m => m !== month);
+            else next = [...new Set([...current, month])].sort();
+            window.systemConfig.lockedMonths = next;
+            const ok = await persistConfigPatch({ lockedMonths: next });
+            if(!ok) return;
+            updateHistoryLockUi(month);
+            window.loadPayrollStatus();
+            window.refreshHistoryView();
+        };
 
         const getValue = (id) => { const el = document.getElementById(id); return el ? Number(el.value) : 0; }
         const localManagedDefaults = {
@@ -487,6 +578,7 @@
             contractHours: 209,
             dependents: 1,
             insurance: true,
+            birthDate: '',
             bankName: '',
             accountNum: '',
             isInclusive: false,
@@ -568,6 +660,44 @@
             }
             return '';
         };
+        const normalizeBirthDate = (v) => {
+            const s = String(v || '').trim();
+            if (!s) return '';
+            const digits = s.replace(/\D/g, '');
+            let y = '';
+            let m = '';
+            let d = '';
+
+            if (digits.length >= 7) {
+                const yy = digits.slice(0, 2);
+                const mm = digits.slice(2, 4);
+                const dd = digits.slice(4, 6);
+                const code = digits.slice(6, 7);
+                if (!/^\d{2}$/.test(yy) || !/^\d{2}$/.test(mm) || !/^\d{2}$/.test(dd) || !/^\d$/.test(code)) return '';
+                let century = '';
+                if (['1', '2', '5', '6', '9', '0'].includes(code)) century = '19';
+                else if (['3', '4', '7', '8'].includes(code)) century = '20';
+                else century = '19';
+                y = `${century}${yy}`;
+                m = mm;
+                d = dd;
+            } else if (digits.length === 6) {
+                const yy = digits.slice(0, 2);
+                m = digits.slice(2, 4);
+                d = digits.slice(4, 6);
+                const nowYY = Number(new Date().getFullYear().toString().slice(2));
+                const nYY = Number(yy);
+                const century = nYY <= nowYY ? '20' : '19';
+                y = `${century}${yy}`;
+            } else {
+                const direct = normalizeDate(v);
+                return direct || '';
+            }
+            const dt = new Date(`${y}-${m}-${d}T00:00:00`);
+            if (Number.isNaN(dt.getTime())) return '';
+            if (dt.getFullYear() !== Number(y) || (dt.getMonth() + 1) !== Number(m) || dt.getDate() !== Number(d)) return '';
+            return `${y}-${m}-${d}`;
+        };
         const normalizeSourceEmployee = (raw, fallbackId = '') => {
             const name = String(
                 getFirst(raw, ['name', 'empName', 'employeeName', 'fullName', '이름', '성명']) ||
@@ -585,14 +715,18 @@
                 getFirst(raw, ['joinDate', 'hireDate', 'joinedAt', 'startDate', '입사일', '입사일자', '입사']) ||
                 findDeepValue(raw, ['joindate', 'join', 'hiredate', 'hire', 'startdate', '입사', '채용', '고용시작']);
             const joinDate = normalizeDate(joinDateRaw);
+            const birthDateRaw =
+                getFirst(raw, ['birthDate', 'birthday', 'dob', 'birth', '생년월일', '생일', 'residentNo', 'rrn', 'jumin', '주민번호', '주민등록번호']) ||
+                findDeepValue(raw, ['birthdate', 'birthday', 'dob', 'birth', '생년월일', '생일', 'resident', 'rrn', 'jumin', '주민번호', '주민등록번호']);
+            const birthDate = normalizeBirthDate(birthDateRaw);
             const sourceEmpNo = String(getFirst(raw, ['id', 'empId', 'employeeId', 'employeeNo', 'empNo']) || '').trim();
             const sourceId = String(getFirst(raw, ['sourceId']) || fallbackId || sourceEmpNo || '').trim();
             if (!name) return null;
-            return { sourceId, sourceEmpNo, name, dept, position, joinDate };
+            return { sourceId, sourceEmpNo, name, dept, position, joinDate, birthDate };
         };
         const digestEmployees = (items) => {
             const keys = items
-                .map((x) => `${x.sourceId || ''}|${x.sourceEmpNo || ''}|${x.name || ''}|${x.dept || ''}|${x.position || ''}|${x.joinDate || ''}`)
+                .map((x) => `${x.sourceId || ''}|${x.sourceEmpNo || ''}|${x.name || ''}|${x.dept || ''}|${x.position || ''}|${x.joinDate || ''}|${x.birthDate || ''}`)
                 .sort();
             return keys.join('||');
         };
@@ -605,6 +739,10 @@
             return cur;
         };
         const displayEmpId = (rawId) => sanitizeEmpId(rawId, '');
+        const formatBirthDate = (v) => {
+            const d = normalizeDate(v);
+            return d || '-';
+        };
         const sameName = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
         const isMatchEmployee = (localEmp, srcEmp) => {
             if (!localEmp || !srcEmp) return false;
@@ -616,10 +754,10 @@
         const setFormFieldLock = (locked) => {
             const form = document.getElementById('emp-form');
             if (!form) return;
-            ['name', 'dept', 'position', 'joinDate'].forEach((k) => {
+            ['name', 'dept', 'position', 'joinDate', 'birthDate'].forEach((k) => {
                 const el = form[k];
                 if (!el) return;
-                if (k === 'joinDate') {
+                if (k === 'joinDate' || k === 'birthDate') {
                     el.readOnly = locked;
                     el.disabled = locked;
                 } else {
@@ -762,6 +900,7 @@
                             dept: src.dept,
                                 position: src.position,
                                 joinDate: src.joinDate,
+                                birthDate: src.birthDate || prev.birthDate || '',
                                 externalSourceId: src.sourceId || prev.externalSourceId || src.sourceEmpNo,
                                 sourceSyncLocked: true,
                                 id: sanitizeEmpId(prev.id, src.sourceEmpNo)
@@ -776,6 +915,7 @@
                                 dept: src.dept,
                                 position: src.position,
                                 joinDate: src.joinDate,
+                                birthDate: src.birthDate || '',
                             externalSourceId: src.sourceId || src.sourceEmpNo,
                             sourceSyncLocked: true
                         });
@@ -796,6 +936,7 @@
                             dept: src.dept,
                             position: src.position,
                             joinDate: src.joinDate,
+                            birthDate: src.birthDate || found.birthDate || '',
                             externalSourceId: src.sourceId || found.externalSourceId || src.sourceEmpNo,
                             sourceSyncLocked: true
                         });
@@ -808,6 +949,7 @@
                             dept: src.dept,
                             position: src.position,
                             joinDate: src.joinDate,
+                            birthDate: src.birthDate || '',
                             externalSourceId: src.sourceId || src.sourceEmpNo,
                             sourceSyncLocked: true
                         });
@@ -911,12 +1053,20 @@
 
             const hMonth = document.getElementById('history-month');
             if (hMonth) hMonth.value = today.toISOString().slice(0, 7);
+            if (hMonth) hMonth.addEventListener('change', () => updateHistoryLockUi(hMonth.value));
 
             const psMonth = document.getElementById('payslip-month');
             if(psMonth) psMonth.value = today.toISOString().slice(0, 7);
 
+            ['hf-emp-name','hf-dept','hf-position','hf-min-pay','hf-max-pay','hf-min-deduct','hf-max-deduct','hf-sort'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => window.refreshHistoryView());
+                if (el) el.addEventListener('change', () => window.refreshHistoryView());
+            });
+
             loadEmployees();
             startSourceAutoSync();
+            loadPayrollStatus();
             router('dashboard');
         };
         document.getElementById('login-form').addEventListener('submit', window.handleLogin);
@@ -949,8 +1099,14 @@
         window.loadEmployees = async () => {
              if (isDemoMode) {
                 const stored = localStorage.getItem('employees');
-                if (stored) window.employeeData = JSON.parse(stored);
-                else {
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        window.employeeData = Array.isArray(parsed) ? parsed : [];
+                    } catch (e) {
+                        window.employeeData = [];
+                    }
+                } else {
                     window.employeeData = [
                         { docId: '1', id: '2024001', name: '김철수', dept: '생산1팀', position: '대리', baseSalary: 3500000, contractHours: 209, dependents: 3, joinDate: '2018-03-01', empType: 'salary', insurance: true },
                         { docId: '3', id: '2024003', name: '박민수', dept: '생산2팀', position: '과장', baseSalary: 15000, contractHours: 120, dependents: 4, joinDate: '2015-05-20', empType: 'hourly', insurance: true }, 
@@ -1084,7 +1240,8 @@
             else window.autoCalcSalary('monthly'); // Reverse calc annual for others
 
             form.contractHours.value = emp.contractHours || 209;
-            form.dependents.value = emp.dependents; form.joinDate.value = emp.joinDate || ''; 
+            form.dependents.value = emp.dependents; form.joinDate.value = emp.joinDate || '';
+            form.birthDate.value = emp.birthDate || '';
             document.getElementById('emp-insurance').checked = emp.insurance !== false;
             form.bankName.value = emp.bankName || ''; form.accountNum.value = emp.accountNum || '';
             
@@ -1109,7 +1266,7 @@
              const prevEmp = demoIndex !== undefined && demoIndex !== "" ? window.employeeData[demoIndex] : null;
              const isLockedSource = !!(prevEmp && prevEmp.sourceSyncLocked);
              const empData = { 
-                 name: formData.get('name'), id: formData.get('id'), dept: formData.get('dept'), position: formData.get('position'), joinDate: formData.get('joinDate'), 
+                 name: formData.get('name'), id: formData.get('id'), dept: formData.get('dept'), position: formData.get('position'), joinDate: formData.get('joinDate'), birthDate: formData.get('birthDate'),
                  baseSalary: Number(formData.get('baseSalary')), contractHours: Number(formData.get('contractHours')), dependents: Number(formData.get('dependents')), 
                  empType: formData.get('empType'), insurance: document.getElementById('emp-insurance').checked, bankName: formData.get('bankName'), accountNum: formData.get('accountNum'),
                  isInclusive: isInc, fixedOvertimeHours: isInc ? Number(formData.get('fixedOvertimeHours')) : 0
@@ -1119,6 +1276,7 @@
                  empData.dept = prevEmp.dept;
                  empData.position = prevEmp.position;
                  empData.joinDate = prevEmp.joinDate;
+                 empData.birthDate = prevEmp.birthDate || '';
                  empData.externalSourceId = prevEmp.externalSourceId || '';
                  empData.sourceSyncLocked = true;
                  if(!empData.id) empData.id = prevEmp.id;
@@ -1169,20 +1327,12 @@
 
             const configData = {
                 paymentDay: newPaymentDay,
-                payrollRates: newRates
+                payrollRates: newRates,
+                lockedMonths: window.systemConfig.lockedMonths || []
             };
 
-            if(isDemoMode) {
-                const current = JSON.parse(localStorage.getItem('app_config') || '{}');
-                localStorage.setItem('app_config', JSON.stringify({ ...current, ...configData }));
-            } else {
-                try {
-                    await setDoc(doc(db, "config", "settings"), configData, { merge: true });
-                } catch(e) {
-                    alert("설정 저장 실패: " + e.message);
-                    return;
-                }
-            }
+            const ok = await persistConfigPatch(configData);
+            if(!ok) return;
 
             closeRateModal(); 
             if(window.currentEmployee) calcCurrent(); 
@@ -1192,23 +1342,34 @@
         window.changePassword = async () => { 
             const newPw = document.getElementById('new-password').value;
             if(!newPw) return alert("새 비밀번호 입력 필요");
-            if(isDemoMode) {
-                const current = JSON.parse(localStorage.getItem('app_config') || '{}');
-                localStorage.setItem('app_config', JSON.stringify({ ...current, password: newPw }));
-            } else {
-                await setDoc(doc(db, "config", "settings"), { password: newPw }, { merge: true });
-            }
+            const ok = await persistConfigPatch({ password: newPw });
+            if(!ok) return;
             window.systemConfig.password = newPw;
             alert("변경됨"); 
         };
 
         // Payroll
-        window.loadPayrollStatus = () => window.renderPayrollEmpList();
+        window.loadPayrollStatus = () => {
+            window.renderPayrollEmpList();
+            const month = document.getElementById('payroll-month')?.value;
+            const locked = month ? isMonthLocked(month) : false;
+            const btn = document.getElementById('btn-save-payroll');
+            if(btn) {
+                btn.disabled = locked;
+                if (locked) {
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.title = `${month} 잠금월`;
+                } else {
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btn.title = '';
+                }
+            }
+        };
         window.renderPayrollEmpList = () => {
              const list = document.getElementById('payroll-emp-list'); if(!list) return; list.innerHTML = '';
-             window.employeeData.forEach(e => {
+             window.employeeData.forEach((e) => {
                 const li = document.createElement('li'); li.className = "p-3 rounded-lg hover:bg-brand-50 cursor-pointer transition-all border border-transparent hover:border-brand-200 flex justify-between items-center group";
-                li.onclick = () => selectEmployeeForPayroll(window.employeeData.find(x=>x.id==e.id));
+                li.onclick = () => selectEmployeeForPayroll(e);
                 li.innerHTML = `<div class="flex items-center"><div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 text-xs">${e.name[0]}</div><div><p class="text-sm font-bold text-gray-700">${e.name}</p><p class="text-[10px] text-gray-400">${e.dept}</p></div></div>`;
                 list.appendChild(li);
             });
@@ -1323,18 +1484,46 @@
 
         window.savePayroll = async () => {
              const msg = window.editingDocId ? "수정하시겠습니까?" : "확정하시겠습니까?"; if (!confirm(msg)) return;
+             if (!window.currentEmployee) return alert("사원을 먼저 선택해주세요.");
              const month = document.getElementById('payroll-month').value;
-             const empId = window.currentEmployee.id;
+             if (isMonthLocked(month)) return alert(`${month}은(는) 잠금월입니다. 해제 후 저장/수정 가능합니다.`);
+             const emp = window.currentEmployee;
+             const cleanEmpId = displayEmpId(emp.id) || '';
+             const empKey = cleanEmpId ? `ID:${cleanEmpId}` : `DOC:${emp.docId || `${emp.name}|${emp.dept || '-'}`}`;
+             const isSamePayrollEmployee = (row) => {
+                 const r = row || {};
+                 if (r.empKey) return r.empKey === empKey;
+                 const rowEmpId = displayEmpId(r.empId) || '';
+                 if (cleanEmpId && rowEmpId) return rowEmpId === cleanEmpId;
+                 if (!cleanEmpId && !rowEmpId) {
+                     const rowName = String(r.empName || '').trim();
+                     const rowDept = String(r.empDept || '').trim();
+                     const empName = String(emp.name || '').trim();
+                     const empDept = String(emp.dept || '').trim();
+                     if (rowDept || empDept) return rowName === empName && rowDept === empDept;
+                     return !!rowName && rowName === empName;
+                 }
+                 return false;
+             };
              
              if (!window.editingDocId) {
                  let exists = false;
-                 if(isDemoMode) { const h = JSON.parse(localStorage.getItem('payroll_history')||'[]'); exists = h.some(r => r.month === month && r.empId === empId); }
-                 else { const q = query(collection(db, "payroll_records"), where("month", "==", month), where("empId", "==", empId)); const s = await getDocs(q); exists = !s.empty; }
+                 if(isDemoMode) {
+                     const h = JSON.parse(localStorage.getItem('payroll_history')||'[]');
+                     exists = h.some(r => r.month === month && isSamePayrollEmployee(r));
+                 }
+                 else {
+                     const q = query(collection(db, "payroll_records"), where("month", "==", month));
+                     const s = await getDocs(q);
+                     s.forEach((docSnap) => {
+                         const row = docSnap.data() || {};
+                         if (isSamePayrollEmployee(row)) exists = true;
+                     });
+                 }
                  if(exists) return alert("이미 존재합니다.");
              }
 
              // Save Logic adjusted for inclusive wage
-             const emp = window.currentEmployee;
              const baseTime = getValue('inp-base-time') || 209;
              let basePay = 0, hourlyRate = 0, fixedAllowance = 0;
              if (emp.isInclusive && emp.empType === 'salary') {
@@ -1350,7 +1539,10 @@
              }
 
              const record = {
-                 month, empId, empName: window.currentEmployee.name, 
+                 month, empId: cleanEmpId, empKey, empName: window.currentEmployee.name, 
+                 empDept: window.currentEmployee.dept || '-',
+                 empPosition: window.currentEmployee.position || '-',
+                 empBirthDate: window.currentEmployee.birthDate || '',
                  baseSalary: basePay, // Store calculated base
                  fixedAllowance: fixedAllowance, // Store calculated fixed OT
                  empType: window.currentEmployee.empType,
@@ -1394,33 +1586,184 @@
              document.getElementById('ret-avg-daily').innerText = avg.toLocaleString() + " 원"; document.getElementById('ret-result').innerText = ret.toLocaleString();
         };
 
-        // 8. History & Delete (Restored)
+        // 8. History & Close Validation
+        window.resetHistoryFilters = () => {
+            ['hf-emp-name', 'hf-dept', 'hf-position', 'hf-min-pay', 'hf-max-pay', 'hf-min-deduct', 'hf-max-deduct'].forEach((id) => {
+                const el = document.getElementById(id);
+                if(el) el.value = '';
+            });
+            const sortEl = document.getElementById('hf-sort');
+            if(sortEl) sortEl.value = 'name_asc';
+            window.refreshHistoryView();
+        };
+        window.getFilteredHistoryData = () => {
+            const empName = String(document.getElementById('hf-emp-name')?.value || '').trim().toLowerCase();
+            const dept = String(document.getElementById('hf-dept')?.value || '').trim().toLowerCase();
+            const position = String(document.getElementById('hf-position')?.value || '').trim().toLowerCase();
+            const minPay = Number(document.getElementById('hf-min-pay')?.value || 0);
+            const maxPay = Number(document.getElementById('hf-max-pay')?.value || 0);
+            const minDeduct = Number(document.getElementById('hf-min-deduct')?.value || 0);
+            const maxDeduct = Number(document.getElementById('hf-max-deduct')?.value || 0);
+            const sortKey = document.getElementById('hf-sort')?.value || 'name_asc';
+            let rows = (window.historyData || []).filter((r) => {
+                const nameOk = !empName || String(r.empName || '').toLowerCase().includes(empName);
+                const deptOk = !dept || String(r.empDept || '').toLowerCase().includes(dept);
+                const posOk = !position || String(r.empPosition || '').toLowerCase().includes(position);
+                const pay = Number(r.totalPay) || 0;
+                const deduct = Number(r.totalDeduct) || 0;
+                const payMinOk = !minPay || pay >= minPay;
+                const payMaxOk = !maxPay || pay <= maxPay;
+                const deductMinOk = !minDeduct || deduct >= minDeduct;
+                const deductMaxOk = !maxDeduct || deduct <= maxDeduct;
+                return nameOk && deptOk && posOk && payMinOk && payMaxOk && deductMinOk && deductMaxOk;
+            });
+            rows.sort((a, b) => {
+                if (sortKey === 'total_desc') return (Number(b.totalPay)||0) - (Number(a.totalPay)||0);
+                if (sortKey === 'net_desc') return (Number(b.netPay)||0) - (Number(a.netPay)||0);
+                if (sortKey === 'deduct_rate_desc') return getDeductRate(b) - getDeductRate(a);
+                return String(a.empName || '').localeCompare(String(b.empName || ''), 'ko');
+            });
+            return rows;
+        };
+        window.renderHistoryCloseReport = () => {
+            const reportEl = document.getElementById('history-close-report');
+            if(!reportEl) return;
+            const month = document.getElementById('history-month')?.value || '';
+            const rows = window.historyData || [];
+            if(!month) {
+                reportEl.innerHTML = '<b>마감 검증</b> 조회 년월을 선택하세요.';
+                return;
+            }
+            const payrollEmpKeys = new Set(rows.map((r) => getRecordEmpKey(r)));
+            const toEmpKey = (e) => {
+                const cleanId = displayEmpId(e?.id) || '';
+                if (cleanId) return `ID:${cleanId}`;
+                return `NAME:${String(e?.name || '').trim()}|${String(e?.dept || '').trim()}`;
+            };
+            const missing = (window.employeeData || []).filter((e) => !payrollEmpKeys.has(toEmpKey(e)));
+            const negativeRows = rows.filter((r) => (Number(r.totalPay)||0) < 0 || (Number(r.totalDeduct)||0) < 0 || (Number(r.netPay)||0) < 0);
+            const abnormalDeductRows = rows.filter((r) => {
+                const rate = getDeductRate(r);
+                return rate >= 0.5 || (rate > 0 && rate <= 0.01);
+            });
+            const zeroPayRows = rows.filter((r) => (Number(r.totalPay)||0) === 0);
+            const dupMap = {};
+            rows.forEach((r) => {
+                const k = getRecordEmpKey(r);
+                dupMap[k] = (dupMap[k] || 0) + 1;
+            });
+            const duplicateCount = Object.keys(dupMap).filter((k) => dupMap[k] > 1).length;
+            reportEl.innerHTML = `<div class="flex flex-wrap items-center gap-3"><b>마감 검증 (${month})</b><span>대상 ${window.employeeData.length}명</span><span>확정 ${rows.length}건</span><span class="font-bold ${missing.length ? 'text-red-700' : 'text-emerald-700'}">누락 ${missing.length}명</span><span class="font-bold ${duplicateCount ? 'text-red-700' : 'text-emerald-700'}">중복 ${duplicateCount}명</span><span class="font-bold ${negativeRows.length ? 'text-red-700' : 'text-emerald-700'}">음수/오류 ${negativeRows.length}건</span><span class="font-bold ${abnormalDeductRows.length ? 'text-amber-700' : 'text-emerald-700'}">공제율 이상 ${abnormalDeductRows.length}건</span><span class="font-bold ${zeroPayRows.length ? 'text-amber-700' : 'text-emerald-700'}">지급 0원 ${zeroPayRows.length}건</span></div>`;
+        };
+        window.refreshHistoryView = () => {
+            const month = document.getElementById('history-month')?.value || '';
+            updateHistoryLockUi(month);
+            const rows = window.getFilteredHistoryData();
+            const tbody = document.getElementById('history-list-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">데이터가 없습니다.</td></tr>';
+                window.renderHistoryCloseReport();
+                return;
+            }
+            const locked = isMonthLocked(month);
+            rows.forEach((rec) => {
+                const idx = window.historyData.indexOf(rec);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-6 py-4 text-left font-bold text-gray-700">${rec.empName}</td><td class="px-6 py-4 text-right text-gray-500">${Number(rec.baseSalary).toLocaleString()}</td><td class="px-6 py-4 text-right text-blue-600 font-medium">${(rec.totalPay - rec.baseSalary).toLocaleString()}</td><td class="px-6 py-4 text-right font-bold text-gray-800">${rec.totalPay.toLocaleString()}</td><td class="px-6 py-4 text-right text-red-500">${rec.totalDeduct.toLocaleString()}</td><td class="px-6 py-4 text-right font-bold text-brand-700">${rec.netPay.toLocaleString()}</td><td class="px-6 py-4 text-center space-x-2"><button ${locked ? 'disabled title="잠금월"' : ''} onclick="editHistoryRecord('${idx}')" class="px-2 py-1 border rounded text-xs ${locked ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-50'}"><i class="fa-solid fa-pen"></i></button><button ${locked ? 'disabled title="잠금월"' : ''} onclick="deleteHistoryRecord('${idx}')" class="px-2 py-1 border border-red-200 text-red-600 rounded text-xs ${locked ? 'opacity-40 cursor-not-allowed' : 'hover:bg-red-50'}"><i class="fa-solid fa-trash"></i></button></td>`;
+                tbody.appendChild(tr);
+            });
+            window.renderHistoryCloseReport();
+        };
         window.loadHistory = async () => {
-             const month = document.getElementById('history-month').value; window.historyData = [];
+             const month = document.getElementById('history-month')?.value; window.historyData = [];
+             if (!month) return;
              if (isDemoMode) { const all = JSON.parse(localStorage.getItem('payroll_history') || '[]'); window.historyData = all.filter(r => r.month === month); }
              else { try { const q = query(collection(db, "payroll_records"), where("month", "==", month)); const s = await getDocs(q); s.forEach(d => window.historyData.push({ ...d.data(), docId: d.id })); } catch(e) { isDemoMode = true; loadHistory(); return; } }
-             
-             const tbody = document.getElementById('history-list-body'); if(!tbody) return; tbody.innerHTML = '';
-             if (window.historyData.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">데이터가 없습니다.</td></tr>'; return; }
-             window.historyData.forEach((rec, idx) => {
-                 const tr = document.createElement('tr');
-                 tr.innerHTML = `<td class="px-6 py-4 text-left font-bold text-gray-700">${rec.empName}</td><td class="px-6 py-4 text-right text-gray-500">${Number(rec.baseSalary).toLocaleString()}</td><td class="px-6 py-4 text-right text-blue-600 font-medium">${(rec.totalPay - rec.baseSalary).toLocaleString()}</td><td class="px-6 py-4 text-right font-bold text-gray-800">${rec.totalPay.toLocaleString()}</td><td class="px-6 py-4 text-right text-red-500">${rec.totalDeduct.toLocaleString()}</td><td class="px-6 py-4 text-right font-bold text-brand-700">${rec.netPay.toLocaleString()}</td><td class="px-6 py-4 text-center space-x-2"><button onclick="editHistoryRecord('${idx}')" class="px-2 py-1 border rounded text-xs hover:bg-gray-50"><i class="fa-solid fa-pen"></i></button><button onclick="deleteHistoryRecord('${idx}')" class="px-2 py-1 border border-red-200 text-red-600 rounded text-xs hover:bg-red-50"><i class="fa-solid fa-trash"></i></button></td>`;
-                 tbody.appendChild(tr);
-             });
+             window.refreshHistoryView();
         };
         window.deleteHistoryRecord = async (idx) => {
             if(!confirm("삭제하시겠습니까?")) return;
             const rec = window.historyData[idx];
-            if(isDemoMode) { let h = JSON.parse(localStorage.getItem('payroll_history')||'[]'); h = h.filter(r => r.docId !== rec.docId); localStorage.setItem('payroll_history', JSON.stringify(h)); }
-            else { await deleteDoc(doc(db, "payroll_records", rec.docId)); }
-            alert("삭제됨"); loadHistory(); updateDashboard();
+            if (isMonthLocked(rec.month)) return alert(`${rec.month}은(는) 잠금월이라 삭제할 수 없습니다.`);
+            const recEmpKey = rec.empKey || '';
+            const recEmpId = displayEmpId(rec.empId) || '';
+            const recEmpName = String(rec.empName || '').trim();
+            const recEmpDept = String(rec.empDept || '').trim();
+            const isSameRecordEmployee = (row) => {
+                const r = row || {};
+                if (recEmpKey && r.empKey) return r.empKey === recEmpKey;
+                const rowEmpId = displayEmpId(r.empId) || '';
+                if (recEmpId && rowEmpId) return rowEmpId === recEmpId;
+                if (!recEmpId && !rowEmpId) {
+                    const rowName = String(r.empName || '').trim();
+                    const rowDept = String(r.empDept || '').trim();
+                    if (recEmpDept || rowDept) return rowName === recEmpName && rowDept === recEmpDept;
+                    return !!rowName && rowName === recEmpName;
+                }
+                return false;
+            };
+            if(isDemoMode) {
+                let h = JSON.parse(localStorage.getItem('payroll_history')||'[]');
+                h = h.filter(r => !(r.month === rec.month && isSameRecordEmployee(r)));
+                localStorage.setItem('payroll_history', JSON.stringify(h));
+            }
+            else {
+                if (rec.docId) await deleteDoc(doc(db, "payroll_records", rec.docId));
+                const q = query(collection(db, "payroll_records"), where("month", "==", rec.month));
+                const s = await getDocs(q);
+                const deletes = [];
+                s.forEach((docSnap) => {
+                    const row = docSnap.data() || {};
+                    if (isSameRecordEmployee(row)) deletes.push(deleteDoc(doc(db, "payroll_records", docSnap.id)));
+                });
+                if (deletes.length) await Promise.all(deletes);
+            }
+            if (window.currentEmployee && isSameRecordEmployee({
+                empKey: window.currentEmployee.id ? `ID:${displayEmpId(window.currentEmployee.id)}` : `DOC:${window.currentEmployee.docId || `${window.currentEmployee.name}|${window.currentEmployee.dept || '-'}`}`,
+                empId: window.currentEmployee.id,
+                empName: window.currentEmployee.name,
+                empDept: window.currentEmployee.dept
+            })) {
+                window.currentEmployee = null;
+                window.editingDocId = null;
+                const ph = document.getElementById('payroll-placeholder');
+                if (ph) ph.classList.remove('hidden');
+            }
+            alert("삭제됨");
+            loadHistory();
+            loadPayrollStatus();
+            loadPayslipList();
+            updateDashboard();
         };
         window.editHistoryRecord = (idx) => { 
-            const rec = window.historyData[idx]; const emp = window.employeeData.find(e => e.id === rec.empId); if(!emp) return alert("사원정보 없음");
-            router('payroll'); document.getElementById('payroll-month').value = rec.month; window.editingDocId = rec.docId; window.currentEmployee = emp;
-            document.getElementById('payroll-placeholder').classList.add('hidden');
-            document.getElementById('target-emp-initial').innerText = emp.name[0]; document.getElementById('target-emp-name').innerText = emp.name;
-            const i = rec.inputs;
+            const rec = window.historyData[idx];
+            if (isMonthLocked(rec.month)) return alert(`${rec.month}은(는) 잠금월이라 수정할 수 없습니다.`);
+            let emp = window.employeeData.find(e => e.id === rec.empId);
+            if (!emp && rec.empKey && String(rec.empKey).startsWith('DOC:')) {
+                const docKey = String(rec.empKey).slice(4);
+                emp = window.employeeData.find(e => String(e.docId || '') === docKey);
+            }
+            emp = emp || {
+                id: rec.empId,
+                name: rec.empName || '삭제된 사원',
+                dept: rec.empDept || '-',
+                position: rec.empPosition || '-',
+                birthDate: rec.empBirthDate || '',
+                empType: rec.empType || 'salary',
+                baseSalary: Number(rec.baseSalary) || 0,
+                contractHours: (rec.inputs && rec.inputs.baseTime) ? Number(rec.inputs.baseTime) : 209,
+                dependents: 1,
+                insurance: true,
+                isInclusive: false,
+                fixedOvertimeHours: 0
+            };
+            router('payroll');
+            document.getElementById('payroll-month').value = rec.month;
+            selectEmployeeForPayroll(emp);
+            window.editingDocId = rec.docId;
+            const i = rec.inputs || {};
             const s = (id, v) => { const e = document.getElementById(id); if(e) e.value = v; };
             s('inp-base-time', i.baseTime); s('inp-ot-time', i.otTime); s('inp-night-time', i.nightTime); s('inp-holiday-time', i.holidayTime); s('inp-bonus', i.bonus); s('inp-meal', i.meal); s('inp-vehicle', i.vehicle); s('inp-deduction', i.deduction); s('inp-absence-hours', i.absenceHours); s('inp-memo', i.memo);
             if(i.isOverridden) { window.isDeductOverridden = true; enableDeductEdit(); s('res-pension-inp', i.pension); s('res-health-inp', i.health); s('res-care-inp', i.care); s('res-employ-inp', i.employ); s('res-tax-inp', i.tax); }
@@ -1435,11 +1778,11 @@
             else { const q = query(collection(db, "payroll_records")); const s = await getDocs(q); s.forEach(d => recs.push(d.data())); }
             
             document.getElementById('dash-total-emp').innerText = window.employeeData.length;
-            const totalBase = window.employeeData.reduce((a,c) => a+Number(c.baseSalary), 0);
-            const estCost = Math.floor(totalBase * 1.1); 
-            document.getElementById('dash-total-cost').innerText = estCost.toLocaleString() + " 원";
-            
             const curMonth = new Date().toISOString().slice(0, 7);
+            const currentMonthRecs = recs.filter(r => r.month === curMonth);
+            const monthCost = currentMonthRecs.reduce((a, r) => a + (Number(r.totalPay) || 0), 0);
+            document.getElementById('dash-total-cost').innerText = monthCost.toLocaleString() + " 원";
+            
             const processed = recs.filter(r => r.month === curMonth).length;
             const pct = window.employeeData.length ? Math.round((processed/window.employeeData.length)*100) : 0;
             document.getElementById('dash-processed').innerText = pct + "%";
@@ -1491,8 +1834,7 @@
                 if(compChart) compChart.destroy();
                 const currentRecs = recs.filter(r => r.month === curMonth);
                 let sumBase = 0, sumTotal = 0, sumDeduct = 0;
-                if(currentRecs.length > 0) { sumBase = currentRecs.reduce((a, r) => a + (Number(r.baseSalary)||0), 0); sumTotal = currentRecs.reduce((a, r) => a + (r.totalPay||0), 0); sumDeduct = currentRecs.reduce((a, r) => a + (r.totalDeduct||0), 0); } 
-                else { sumBase = window.employeeData.reduce((a, r) => a + (Number(r.baseSalary)||0), 0); sumTotal = sumBase; sumDeduct = sumBase * 0.1; }
+                if(currentRecs.length > 0) { sumBase = currentRecs.reduce((a, r) => a + (Number(r.baseSalary)||0), 0); sumTotal = currentRecs.reduce((a, r) => a + (r.totalPay||0), 0); sumDeduct = currentRecs.reduce((a, r) => a + (r.totalDeduct||0), 0); }
                 const sumAllow = Math.max(0, sumTotal - sumBase);
                 compChart = new Chart(ctxC, { type: 'pie', data: { labels: ['기본급', '수당', '공제'], datasets: [{ data: [sumBase, sumAllow, sumDeduct], backgroundColor: ['#0ea5e9', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
@@ -1514,10 +1856,11 @@
         };
         window.renderPayslip = (idx) => {
             const rec = window.cachedPayslipData[idx]; if(!rec) return;
-            const emp = window.employeeData.find(e => e.id === rec.empId) || { dept: '-', position: '-' }; const inputs = rec.inputs || {};
+            const emp = window.employeeData.find(e => e.id === rec.empId) || { dept: rec.empDept || '-', position: rec.empPosition || '-', birthDate: rec.empBirthDate || '' }; const inputs = rec.inputs || {};
             document.getElementById('printable-area').classList.remove('hidden'); document.getElementById('payslip-placeholder').classList.add('hidden');
             document.getElementById('ps-title-month').innerText = `${rec.month} 급여명세서`;
             document.getElementById('ps-id').innerText = displayEmpId(rec.empId) || '-'; document.getElementById('ps-name').innerText = rec.empName; document.getElementById('ps-dept').innerText = emp.dept; document.getElementById('ps-pos').innerText = emp.position; document.getElementById('ps-date').innerText = window.systemConfig.paymentDay + "일";
+            document.getElementById('ps-birth').innerText = formatBirthDate(emp.birthDate || rec.empBirthDate || '');
             
             const payBody = document.getElementById('ps-pay-body');
             const fixedAllowance = rec.fixedAllowance || 0;
