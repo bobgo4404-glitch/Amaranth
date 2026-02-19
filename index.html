@@ -43,6 +43,34 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* Input Contrast Improvement */
+        body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+        body select,
+        body textarea {
+            background-color: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a;
+            transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+        }
+        body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
+        body select:focus,
+        body textarea:focus {
+            background-color: #ffffff !important;
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+            outline: none;
+        }
+        body input[readonly]:not([type="checkbox"]):not([type="radio"]),
+        body input:disabled,
+        body select:disabled,
+        body textarea:disabled {
+            background-color: #eef2f7 !important;
+            color: #64748b;
+        }
+        #report-content {
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        }
+
         /* Print Optimization for A4 Portrait */
         @media print {
             @page {
@@ -157,9 +185,15 @@
                 <a href="#" onclick="router('employee')" id="nav-employee" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-users w-8 text-center mr-1"></i> 인사 정보 관리</a>
                 <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6">Payroll Service</p>
                 <a href="#" onclick="router('payroll')" id="nav-payroll" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-calculator w-8 text-center mr-1"></i> 급여 계산/입력</a>
+                <a href="#" onclick="router('closecenter')" id="nav-closecenter" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-list-check w-8 text-center mr-1"></i> 급여 마감센터</a>
+                <a href="#" onclick="router('paymentcenter')" id="nav-paymentcenter" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-building-columns w-8 text-center mr-1"></i> 지급/전표 관리</a>
+                <a href="#" onclick="router('correction')" id="nav-correction" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-pen-to-square w-8 text-center mr-1"></i> 정정/재계산 관리</a>
                 <a href="#" onclick="router('retirement')" id="nav-retirement" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-piggy-bank w-8 text-center mr-1"></i> 퇴직금 정산</a>
                 <a href="#" onclick="router('history')" id="nav-history" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-file-invoice w-8 text-center mr-1"></i> 급여 대장</a>
                 <a href="#" onclick="router('payslip')" id="nav-payslip" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-receipt w-8 text-center mr-1"></i> 급여 명세서</a>
+                <a href="#" onclick="router('alerts')" id="nav-alerts" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-bell w-8 text-center mr-1"></i> 알림센터</a>
+                <a href="#" onclick="router('settingscenter')" id="nav-settingscenter" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-sliders w-8 text-center mr-1"></i> 설정/기준정보</a>
+                <a href="#" onclick="router('reportcenter')" id="nav-reportcenter" class="nav-item group flex items-center px-3 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-all"><i class="fa-solid fa-file-lines w-8 text-center mr-1"></i> 리포트 센터</a>
             </nav>
             <div class="p-4 border-t border-slate-800"><button onclick="logout()" class="w-full flex items-center justify-center px-4 py-2 border border-slate-700 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> 로그아웃</button></div>
         </aside>
@@ -338,6 +372,113 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- VIEW: CLOSE CENTER -->
+                <div id="view-closecenter" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-lg font-bold text-gray-900 mr-2">급여 마감센터</h3>
+                            <input type="month" id="close-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2">
+                            <button onclick="loadCloseCenter()" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700">검증 실행</button>
+                            <span id="close-lock-state" class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600">잠금 상태 확인중</span>
+                            <button id="close-lock-btn" onclick="toggleCloseMonthLock()" class="px-3 py-2 border border-amber-300 text-amber-700 bg-amber-50 rounded-lg text-xs font-bold hover:bg-amber-100"><i class="fa-solid fa-lock mr-1"></i> 월 잠금</button>
+                        </div>
+                        <div id="close-summary" class="mt-4 p-4 rounded-lg border bg-blue-50 border-blue-200 text-xs text-blue-900">검증 전</div>
+                        <div id="close-missing-list" class="mt-3 text-xs text-red-700"></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: PAYMENT CENTER -->
+                <div id="view-paymentcenter" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                            <h3 class="text-lg font-bold text-gray-900 mr-2">지급/전표 관리</h3>
+                            <input type="month" id="payment-center-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2">
+                            <button onclick="loadPaymentCenter()" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700">조회</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-100 text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left font-bold text-gray-500">사원</th>
+                                        <th class="px-6 py-3 text-right font-bold text-gray-500">실수령액</th>
+                                        <th class="px-6 py-3 text-left font-bold text-gray-500">지급일</th>
+                                        <th class="px-6 py-3 text-left font-bold text-gray-500">지급수단</th>
+                                        <th class="px-6 py-3 text-left font-bold text-gray-500">전표번호</th>
+                                        <th class="px-6 py-3 text-center font-bold text-gray-500">지급완료</th>
+                                        <th class="px-6 py-3 text-right font-bold text-gray-500">저장</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payment-center-body" class="bg-white divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: CORRECTION CENTER -->
+                <div id="view-correction" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">정정/재계산 관리</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+                            <input type="month" id="correction-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2">
+                            <select id="correction-emp" class="border-gray-300 rounded-lg shadow-sm text-sm py-2 md:col-span-2"></select>
+                            <input type="number" id="correction-before" class="border-gray-300 rounded-lg shadow-sm text-sm py-2 text-right" placeholder="정정 전 실수령액">
+                            <input type="number" id="correction-after" class="border-gray-300 rounded-lg shadow-sm text-sm py-2 text-right" placeholder="정정 후 실수령액">
+                            <button onclick="saveCorrectionRecord()" class="px-4 py-2 bg-brand-600 text-white text-sm font-bold rounded-lg hover:bg-brand-700">정정 등록</button>
+                        </div>
+                        <textarea id="correction-reason" class="mt-2 w-full border-gray-300 rounded-lg shadow-sm text-sm" rows="2" placeholder="정정 사유"></textarea>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                            <h4 class="text-sm font-bold text-gray-800 mr-2">정정 이력</h4>
+                            <button onclick="loadCorrectionCenter()" class="px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded">새로고침</button>
+                        </div>
+                        <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-100 text-sm"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left font-bold text-gray-500">년월</th><th class="px-6 py-3 text-left font-bold text-gray-500">사원</th><th class="px-6 py-3 text-right font-bold text-gray-500">정정 전</th><th class="px-6 py-3 text-right font-bold text-gray-500">정정 후</th><th class="px-6 py-3 text-left font-bold text-gray-500">사유</th><th class="px-6 py-3 text-left font-bold text-gray-500">일시</th></tr></thead><tbody id="correction-body" class="bg-white divide-y divide-gray-100"></tbody></table></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: ALERT CENTER -->
+                <div id="view-alerts" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-bold text-gray-900">알림센터</h3>
+                            <button onclick="loadAlertCenter()" class="px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded">새로고침</button>
+                        </div>
+                        <div id="alert-cards" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4"></div>
+                        <div id="alert-list" class="space-y-2 text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: SETTINGS CENTER -->
+                <div id="view-settingscenter" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                        <h3 class="text-lg font-bold text-gray-900">설정/기준정보</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">지급일</label><input type="number" id="settings-payment-day" min="1" max="28" class="w-full border-gray-300 rounded-lg text-sm py-2"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">국민연금(%)</label><input type="number" id="settings-rate-pension" step="0.01" class="w-full border-gray-300 rounded-lg text-sm py-2"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">건강보험(%)</label><input type="number" id="settings-rate-health" step="0.01" class="w-full border-gray-300 rounded-lg text-sm py-2"></div>
+                            <button onclick="saveSettingsCenter()" class="px-4 py-2 bg-brand-600 text-white text-sm font-bold rounded-lg hover:bg-brand-700">기준 저장</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="openRateModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50">상세 환경설정 열기</button>
+                            <button onclick="exportPayrollBackup()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50">JSON 백업</button>
+                            <label class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 cursor-pointer">JSON 복원<input id="settings-restore-file" type="file" accept=".json,application/json" class="hidden" onchange="importPayrollBackup(event)"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: REPORT CENTER -->
+                <div id="view-reportcenter" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 no-print">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-lg font-bold text-gray-900 mr-2">리포트 센터</h3>
+                            <input type="month" id="report-month" class="border-gray-300 rounded-lg shadow-sm text-sm py-2">
+                            <button onclick="loadReportCenter()" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700">생성</button>
+                            <button onclick="printReportCenter()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50">인쇄/PDF</button>
+                        </div>
+                    </div>
+                    <div id="report-content" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6"></div>
+                </div>
             </div>
         </main>
     </div>
@@ -463,6 +604,8 @@
         window.employeeData = [];
         window.editingDocId = null;
         window.historyData = [];
+        window.paymentVoucherData = [];
+        window.correctionData = [];
         window.systemConfig = { paymentDay: '25', password: 'admin1234', lockedMonths: [] };
         window.payrollRates = { pension: 4.5, health: 3.60, care: 13.20, employ: 0.9, employer_pension: 4.5, employer_health: 3.60, employer_employ: 1.15, employer_injury: 0.9 };
         window.isDeductOverridden = false;
@@ -536,6 +679,9 @@
             if (cleanEmpId) return `ID:${cleanEmpId}`;
             return `NAME:${String(rec?.empName || '').trim()}|${String(rec?.empDept || '').trim()}`;
         };
+        const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+        const normMonth = (raw) => String(raw || '').slice(0, 7);
+        const makePaymentVoucherId = (month, empKey) => `${normMonth(month)}__${encodeURIComponent(empKey || '')}`;
         const updateHistoryLockUi = (month) => {
             const stateEl = document.getElementById('history-lock-state');
             const btnEl = document.getElementById('history-lock-btn');
@@ -1057,6 +1203,14 @@
 
             const psMonth = document.getElementById('payslip-month');
             if(psMonth) psMonth.value = today.toISOString().slice(0, 7);
+            const closeMonth = document.getElementById('close-month');
+            if(closeMonth) closeMonth.value = today.toISOString().slice(0, 7);
+            const payCenterMonth = document.getElementById('payment-center-month');
+            if(payCenterMonth) payCenterMonth.value = today.toISOString().slice(0, 7);
+            const corrMonth = document.getElementById('correction-month');
+            if(corrMonth) corrMonth.value = today.toISOString().slice(0, 7);
+            const reportMonth = document.getElementById('report-month');
+            if(reportMonth) reportMonth.value = today.toISOString().slice(0, 7);
 
             ['hf-emp-name','hf-dept','hf-position','hf-min-pay','hf-max-pay','hf-min-deduct','hf-max-deduct','hf-sort'].forEach((id) => {
                 const el = document.getElementById(id);
@@ -1067,13 +1221,14 @@
             loadEmployees();
             startSourceAutoSync();
             loadPayrollStatus();
+            loadSettingsCenter();
             router('dashboard');
         };
         document.getElementById('login-form').addEventListener('submit', window.handleLogin);
         window.logout = () => location.reload();
 
         window.router = (viewName) => {
-            ['dashboard', 'employee', 'payroll', 'retirement', 'history', 'payslip'].forEach(v => {
+            ['dashboard', 'employee', 'payroll', 'closecenter', 'paymentcenter', 'correction', 'retirement', 'history', 'payslip', 'alerts', 'settingscenter', 'reportcenter'].forEach(v => {
                 const el = document.getElementById(`view-${v}`);
                 if(el) el.classList.add('hidden');
                 const nav = document.getElementById(`nav-${v}`);
@@ -1083,6 +1238,22 @@
             if(viewEl) viewEl.classList.remove('hidden');
             const navEl = document.getElementById(`nav-${viewName}`);
             if(navEl) { navEl.classList.add('bg-slate-800', 'text-white'); navEl.classList.remove('text-slate-300'); }
+            const titleMap = {
+                dashboard: '대시보드',
+                employee: '인사 정보 관리',
+                payroll: '급여 계산/입력',
+                closecenter: '급여 마감센터',
+                paymentcenter: '지급/전표 관리',
+                correction: '정정/재계산 관리',
+                retirement: '퇴직금 정산',
+                history: '급여 대장',
+                payslip: '급여 명세서',
+                alerts: '알림센터',
+                settingscenter: '설정/기준정보',
+                reportcenter: '리포트 센터'
+            };
+            const titleEl = document.getElementById('page-title');
+            if (titleEl && titleMap[viewName]) titleEl.innerText = titleMap[viewName];
             
             if(viewName !== 'payroll' && window.editingDocId) {
                 window.editingDocId = null;
@@ -1093,6 +1264,12 @@
             if (viewName === 'retirement') updateRetirementSelect();
             if (viewName === 'history') loadHistory();
             if (viewName === 'payslip') loadPayslipList();
+            if (viewName === 'closecenter') loadCloseCenter();
+            if (viewName === 'paymentcenter') loadPaymentCenter();
+            if (viewName === 'correction') loadCorrectionCenter();
+            if (viewName === 'alerts') loadAlertCenter();
+            if (viewName === 'settingscenter') loadSettingsCenter();
+            if (viewName === 'reportcenter') loadReportCenter();
         };
 
         // --- Data Logic ---
@@ -1337,6 +1514,7 @@
             closeRateModal(); 
             if(window.currentEmployee) calcCurrent(); 
             updateDashboard();
+            loadSettingsCenter();
             alert("설정이 저장되었습니다."); 
         };
         window.changePassword = async () => { 
@@ -1345,6 +1523,7 @@
             const ok = await persistConfigPatch({ password: newPw });
             if(!ok) return;
             window.systemConfig.password = newPw;
+            loadSettingsCenter();
             alert("변경됨"); 
         };
 
@@ -1771,7 +1950,456 @@
             document.getElementById('btn-save-payroll').innerHTML = "수정 완료"; calcCurrent();
         };
 
-        // 9. Dashboard (Restored)
+        // 9. Extended Centers
+        const fetchPayrollRecordsByMonth = async (month) => {
+            const m = normMonth(month);
+            if (!m) return [];
+            const rows = [];
+            if (isDemoMode) {
+                const all = JSON.parse(localStorage.getItem('payroll_history') || '[]');
+                return all.filter(r => normMonth(r.month) === m);
+            }
+            const qy = query(collection(db, "payroll_records"), where("month", "==", m));
+            const snap = await getDocs(qy);
+            snap.forEach((d) => rows.push({ ...d.data(), docId: d.id }));
+            return rows;
+        };
+
+        const fetchPaymentVouchersByMonth = async (month) => {
+            const m = normMonth(month);
+            if (!m) return [];
+            if (isDemoMode) {
+                const all = JSON.parse(localStorage.getItem('payment_vouchers') || '[]');
+                return all.filter(v => normMonth(v.month) === m);
+            }
+            const rows = [];
+            const qy = query(collection(db, "payment_vouchers"), where("month", "==", m));
+            const snap = await getDocs(qy);
+            snap.forEach((d) => rows.push({ ...d.data(), docId: d.id }));
+            return rows;
+        };
+
+        const fetchCorrectionsByMonth = async (month) => {
+            const m = normMonth(month);
+            if (!m) return [];
+            if (isDemoMode) {
+                const all = JSON.parse(localStorage.getItem('payroll_corrections') || '[]');
+                return all.filter(v => normMonth(v.month) === m);
+            }
+            const rows = [];
+            const qy = query(collection(db, "payroll_corrections"), where("month", "==", m));
+            const snap = await getDocs(qy);
+            snap.forEach((d) => rows.push({ ...d.data(), docId: d.id }));
+            return rows;
+        };
+
+        window.loadCloseCenter = async () => {
+            const month = document.getElementById('close-month')?.value || '';
+            const lockState = document.getElementById('close-lock-state');
+            const lockBtn = document.getElementById('close-lock-btn');
+            if (lockState && lockBtn) {
+                const locked = isMonthLocked(month);
+                lockState.className = `inline-flex items-center px-2 py-1 rounded text-xs font-bold ${locked ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`;
+                lockState.innerHTML = locked ? '<i class="fa-solid fa-lock mr-1"></i>잠금됨' : '<i class="fa-solid fa-lock-open mr-1"></i>열림';
+                lockBtn.innerHTML = locked ? '<i class="fa-solid fa-lock-open mr-1"></i> 잠금 해제' : '<i class="fa-solid fa-lock mr-1"></i> 월 잠금';
+            }
+            if (!month) return;
+            const rows = await fetchPayrollRecordsByMonth(month);
+            const payrollEmpKeys = new Set(rows.map((r) => getRecordEmpKey(r)));
+            const toEmpKey = (e) => {
+                const cleanId = displayEmpId(e?.id) || '';
+                if (cleanId) return `ID:${cleanId}`;
+                return `NAME:${String(e?.name || '').trim()}|${String(e?.dept || '').trim()}`;
+            };
+            const missing = (window.employeeData || []).filter((e) => !payrollEmpKeys.has(toEmpKey(e)));
+            const duplicateMap = {};
+            rows.forEach((r) => {
+                const k = getRecordEmpKey(r);
+                duplicateMap[k] = (duplicateMap[k] || 0) + 1;
+            });
+            const dupCount = Object.keys(duplicateMap).filter((k) => duplicateMap[k] > 1).length;
+            const negativeRows = rows.filter((r) => (Number(r.totalPay)||0) < 0 || (Number(r.totalDeduct)||0) < 0 || (Number(r.netPay)||0) < 0);
+            const summaryEl = document.getElementById('close-summary');
+            if (summaryEl) {
+                summaryEl.innerHTML = `<div class="flex flex-wrap gap-3"><b>마감 검증 (${escapeHtml(month)})</b><span>대상 ${window.employeeData.length}명</span><span>확정 ${rows.length}건</span><span class="font-bold ${missing.length ? 'text-red-700' : 'text-emerald-700'}">누락 ${missing.length}명</span><span class="font-bold ${dupCount ? 'text-red-700' : 'text-emerald-700'}">중복 ${dupCount}명</span><span class="font-bold ${negativeRows.length ? 'text-red-700' : 'text-emerald-700'}">오류 ${negativeRows.length}건</span></div>`;
+            }
+            const missEl = document.getElementById('close-missing-list');
+            if (missEl) {
+                missEl.innerHTML = missing.length ? `누락 대상: ${missing.map((m) => `${escapeHtml(m.name)}(${escapeHtml(m.dept||'-')})`).join(', ')}` : '';
+            }
+        };
+
+        window.toggleCloseMonthLock = async () => {
+            const month = document.getElementById('close-month')?.value;
+            if (!month) return alert("잠금할 년월을 선택하세요.");
+            const locked = isMonthLocked(month);
+            const current = Array.isArray(window.systemConfig.lockedMonths) ? [...window.systemConfig.lockedMonths] : [];
+            let next = [];
+            if (locked) next = current.filter(m => m !== month);
+            else next = [...new Set([...current, month])].sort();
+            window.systemConfig.lockedMonths = next;
+            const ok = await persistConfigPatch({ lockedMonths: next });
+            if (!ok) return;
+            loadCloseCenter();
+            const hMonth = document.getElementById('history-month')?.value;
+            if (hMonth) updateHistoryLockUi(hMonth);
+        };
+
+        const upsertPaymentVoucher = async (row) => {
+            if (isDemoMode) {
+                let all = JSON.parse(localStorage.getItem('payment_vouchers') || '[]');
+                const idx = all.findIndex((v) => v.id === row.id);
+                if (idx > -1) all[idx] = row;
+                else all.push(row);
+                localStorage.setItem('payment_vouchers', JSON.stringify(all));
+                return;
+            }
+            await setDoc(doc(db, "payment_vouchers", row.id), row, { merge: true });
+        };
+
+        window.loadPaymentCenter = async () => {
+            const month = document.getElementById('payment-center-month')?.value || '';
+            if (!month) return;
+            const rows = await fetchPayrollRecordsByMonth(month);
+            const vouchers = await fetchPaymentVouchersByMonth(month);
+            const voucherMap = {};
+            vouchers.forEach(v => { voucherMap[v.empKey] = v; });
+            window.paymentVoucherData = vouchers;
+            const tbody = document.getElementById('payment-center-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">데이터가 없습니다.</td></tr>';
+                return;
+            }
+            rows.forEach((rec, idx) => {
+                const empKey = getRecordEmpKey(rec);
+                const voucher = voucherMap[empKey] || {};
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-3"><div class="font-bold text-gray-800">${escapeHtml(rec.empName || '-')}</div><div class="text-xs text-gray-500">${escapeHtml(rec.empDept || '-')}</div></td>
+                    <td class="px-6 py-3 text-right font-bold text-brand-700">${Number(rec.netPay || 0).toLocaleString()} 원</td>
+                    <td class="px-6 py-3"><input type="date" id="pv-date-${idx}" class="border-gray-300 rounded text-xs py-1.5" value="${escapeHtml(voucher.paymentDate || '')}"></td>
+                    <td class="px-6 py-3"><select id="pv-method-${idx}" class="border-gray-300 rounded text-xs py-1.5"><option value="">선택</option><option value="계좌이체" ${voucher.method === '계좌이체' ? 'selected' : ''}>계좌이체</option><option value="현금" ${voucher.method === '현금' ? 'selected' : ''}>현금</option><option value="기타" ${voucher.method === '기타' ? 'selected' : ''}>기타</option></select></td>
+                    <td class="px-6 py-3"><input id="pv-slip-${idx}" class="border-gray-300 rounded text-xs py-1.5 px-2 w-full" value="${escapeHtml(voucher.voucherNo || '')}" placeholder="전표번호"></td>
+                    <td class="px-6 py-3 text-center"><input type="checkbox" id="pv-paid-${idx}" ${voucher.paid ? 'checked' : ''}></td>
+                    <td class="px-6 py-3 text-right"><button onclick="savePaymentVoucher('${escapeHtml(month)}', ${idx})" class="px-3 py-1.5 bg-slate-800 text-white text-xs rounded">저장</button></td>
+                `;
+                tr.dataset.rec = JSON.stringify({ empKey, empName: rec.empName || '', empId: rec.empId || '' });
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.savePaymentVoucher = async (month, idx) => {
+            const tbody = document.getElementById('payment-center-body');
+            const tr = tbody?.children?.[idx];
+            if (!tr) return;
+            const rec = JSON.parse(tr.dataset.rec || '{}');
+            const id = makePaymentVoucherId(month, rec.empKey);
+            const row = {
+                id,
+                month: normMonth(month),
+                empKey: rec.empKey || '',
+                empId: rec.empId || '',
+                empName: rec.empName || '',
+                paymentDate: document.getElementById(`pv-date-${idx}`)?.value || '',
+                method: document.getElementById(`pv-method-${idx}`)?.value || '',
+                voucherNo: document.getElementById(`pv-slip-${idx}`)?.value || '',
+                paid: !!document.getElementById(`pv-paid-${idx}`)?.checked,
+                updatedAt: new Date().toISOString()
+            };
+            await upsertPaymentVoucher(row);
+            alert("저장되었습니다.");
+            loadAlertCenter();
+        };
+
+        const upsertCorrection = async (row) => {
+            if (isDemoMode) {
+                let all = JSON.parse(localStorage.getItem('payroll_corrections') || '[]');
+                all.unshift(row);
+                localStorage.setItem('payroll_corrections', JSON.stringify(all.slice(0, 1000)));
+                return;
+            }
+            await addDoc(collection(db, "payroll_corrections"), row);
+        };
+
+        window.loadCorrectionCenter = async () => {
+            const month = document.getElementById('correction-month')?.value || '';
+            if (!month) return;
+            const records = await fetchPayrollRecordsByMonth(month);
+            const sel = document.getElementById('correction-emp');
+            if (sel) {
+                sel.innerHTML = '<option value="">대상 선택</option>';
+                records.forEach((r) => {
+                    const opt = document.createElement('option');
+                    opt.value = getRecordEmpKey(r);
+                    opt.text = `${r.empName} (${displayEmpId(r.empId) || '-'})`;
+                    opt.dataset.net = Number(r.netPay || 0);
+                    sel.appendChild(opt);
+                });
+                sel.onchange = (e) => {
+                    const selected = sel.options[sel.selectedIndex];
+                    const beforeEl = document.getElementById('correction-before');
+                    if (beforeEl && selected?.dataset?.net) beforeEl.value = selected.dataset.net;
+                };
+            }
+            const rows = await fetchCorrectionsByMonth(month);
+            window.correctionData = rows;
+            const body = document.getElementById('correction-body');
+            if (!body) return;
+            body.innerHTML = '';
+            if (rows.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">정정 이력이 없습니다.</td></tr>';
+                return;
+            }
+            rows
+                .sort((a, b) => String(b.createdAt || b.updatedAt || '').localeCompare(String(a.createdAt || a.updatedAt || '')))
+                .forEach((r) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="px-6 py-3">${escapeHtml(r.month || '-')}</td><td class="px-6 py-3 font-bold text-gray-800">${escapeHtml(r.empName || '-')}</td><td class="px-6 py-3 text-right">${Number(r.beforeNet || 0).toLocaleString()}</td><td class="px-6 py-3 text-right font-bold text-brand-700">${Number(r.afterNet || 0).toLocaleString()}</td><td class="px-6 py-3 text-gray-600">${escapeHtml(r.reason || '-')}</td><td class="px-6 py-3 text-xs text-gray-500">${escapeHtml(r.updatedAt || '-')}</td>`;
+                    body.appendChild(tr);
+                });
+        };
+
+        window.saveCorrectionRecord = async () => {
+            const month = document.getElementById('correction-month')?.value || '';
+            const empKey = document.getElementById('correction-emp')?.value || '';
+            const empText = document.getElementById('correction-emp')?.selectedOptions?.[0]?.text || '';
+            const beforeNet = Number(document.getElementById('correction-before')?.value || 0);
+            const afterNet = Number(document.getElementById('correction-after')?.value || 0);
+            const reason = String(document.getElementById('correction-reason')?.value || '').trim();
+            if (!month || !empKey || !reason) return alert("년월/대상/사유를 입력하세요.");
+            const row = {
+                month: normMonth(month),
+                empKey,
+                empName: empText.split(' (')[0] || empText,
+                beforeNet,
+                afterNet,
+                reason,
+                updatedAt: new Date().toLocaleString('ko-KR'),
+                createdAt: new Date().toISOString()
+            };
+            await upsertCorrection(row);
+            document.getElementById('correction-after').value = '';
+            document.getElementById('correction-reason').value = '';
+            await loadCorrectionCenter();
+            loadAlertCenter();
+            alert("정정 이력이 저장되었습니다.");
+        };
+
+        window.loadAlertCenter = async () => {
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            const month = document.getElementById('close-month')?.value || currentMonth;
+            const rows = await fetchPayrollRecordsByMonth(month);
+            const vouchers = await fetchPaymentVouchersByMonth(month);
+            const corrections = await fetchCorrectionsByMonth(month);
+            const paidCount = vouchers.filter(v => !!v.paid).length;
+            const missingCount = Math.max(0, (window.employeeData?.length || 0) - rows.length);
+            const unlocked = !isMonthLocked(month);
+            const unpaidCount = Math.max(0, rows.length - paidCount);
+            const cards = document.getElementById('alert-cards');
+            if (cards) {
+                cards.innerHTML = `
+                    <div class="p-3 rounded-lg border ${unlocked ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}"><div class="text-xs text-gray-500">월 잠금</div><div class="text-lg font-bold ${unlocked ? 'text-amber-700' : 'text-emerald-700'}">${unlocked ? '미잠금' : '잠금완료'}</div></div>
+                    <div class="p-3 rounded-lg border ${missingCount ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}"><div class="text-xs text-gray-500">확정 누락</div><div class="text-lg font-bold ${missingCount ? 'text-red-700' : 'text-emerald-700'}">${missingCount}명</div></div>
+                    <div class="p-3 rounded-lg border ${unpaidCount ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}"><div class="text-xs text-gray-500">미지급</div><div class="text-lg font-bold ${unpaidCount ? 'text-amber-700' : 'text-emerald-700'}">${unpaidCount}건</div></div>
+                    <div class="p-3 rounded-lg border ${corrections.length ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}"><div class="text-xs text-gray-500">정정 이력</div><div class="text-lg font-bold ${corrections.length ? 'text-blue-700' : 'text-gray-700'}">${corrections.length}건</div></div>
+                `;
+            }
+            const list = document.getElementById('alert-list');
+            if (list) {
+                const items = [];
+                if (unlocked) items.push('마감월 잠금이 해제되어 있습니다. 마감센터에서 잠금 처리하세요.');
+                if (missingCount > 0) items.push(`급여 확정 누락 ${missingCount}명이 있습니다.`);
+                if (unpaidCount > 0) items.push(`지급/전표 관리에서 미지급 ${unpaidCount}건 확인이 필요합니다.`);
+                if (corrections.length > 0) items.push(`이번 달 정정/재계산 ${corrections.length}건이 등록되어 있습니다.`);
+                if (items.length === 0) items.push('현재 확인할 경고 항목이 없습니다.');
+                list.innerHTML = items.map((t) => `<div class="p-3 rounded border bg-white">${escapeHtml(t)}</div>`).join('');
+            }
+        };
+
+        window.loadSettingsCenter = () => {
+            const payDay = document.getElementById('settings-payment-day');
+            if (payDay) payDay.value = window.systemConfig.paymentDay || '25';
+            const rP = document.getElementById('settings-rate-pension');
+            const rH = document.getElementById('settings-rate-health');
+            if (rP) rP.value = window.payrollRates.pension || 0;
+            if (rH) rH.value = window.payrollRates.health || 0;
+        };
+
+        window.saveSettingsCenter = async () => {
+            const newPaymentDay = String(document.getElementById('settings-payment-day')?.value || '').trim();
+            const pension = Number(document.getElementById('settings-rate-pension')?.value || window.payrollRates.pension);
+            const health = Number(document.getElementById('settings-rate-health')?.value || window.payrollRates.health);
+            if (!newPaymentDay || Number(newPaymentDay) < 1 || Number(newPaymentDay) > 28) return alert("지급일은 1~28일 사이여야 합니다.");
+            window.systemConfig.paymentDay = newPaymentDay;
+            window.payrollRates.pension = pension;
+            window.payrollRates.health = health;
+            const ok = await persistConfigPatch({
+                paymentDay: newPaymentDay,
+                payrollRates: window.payrollRates,
+                lockedMonths: window.systemConfig.lockedMonths || []
+            });
+            if (!ok) return;
+            alert("설정이 저장되었습니다.");
+            updateDashboard();
+        };
+
+        window.exportPayrollBackup = () => {
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                employees: window.employeeData || [],
+                config: { systemConfig: window.systemConfig, payrollRates: window.payrollRates },
+                demoPaymentVouchers: JSON.parse(localStorage.getItem('payment_vouchers') || '[]'),
+                demoCorrections: JSON.parse(localStorage.getItem('payroll_corrections') || '[]')
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `payroll_backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        window.importPayrollBackup = async (ev) => {
+            const file = ev?.target?.files?.[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                if (data?.config?.systemConfig) {
+                    window.systemConfig = { ...window.systemConfig, ...data.config.systemConfig };
+                }
+                if (data?.config?.payrollRates) {
+                    window.payrollRates = { ...window.payrollRates, ...data.config.payrollRates };
+                }
+                if (Array.isArray(data?.demoPaymentVouchers)) localStorage.setItem('payment_vouchers', JSON.stringify(data.demoPaymentVouchers));
+                if (Array.isArray(data?.demoCorrections)) localStorage.setItem('payroll_corrections', JSON.stringify(data.demoCorrections));
+                await persistConfigPatch({ paymentDay: window.systemConfig.paymentDay, payrollRates: window.payrollRates, lockedMonths: window.systemConfig.lockedMonths || [] });
+                loadSettingsCenter();
+                alert("백업 복원이 완료되었습니다.");
+            } catch (e) {
+                alert("복원 실패: 파일 형식을 확인하세요.");
+            } finally {
+                ev.target.value = '';
+            }
+        };
+
+        window.loadReportCenter = async () => {
+            const month = document.getElementById('report-month')?.value || new Date().toISOString().slice(0, 7);
+            const rows = await fetchPayrollRecordsByMonth(month);
+            const byDept = {};
+            rows.forEach((r) => {
+                const dept = String(r.empDept || '미지정');
+                if (!byDept[dept]) byDept[dept] = { count: 0, totalPay: 0, totalDeduct: 0, netPay: 0 };
+                byDept[dept].count += 1;
+                byDept[dept].totalPay += Number(r.totalPay || 0);
+                byDept[dept].totalDeduct += Number(r.totalDeduct || 0);
+                byDept[dept].netPay += Number(r.netPay || 0);
+            });
+            const totalPay = rows.reduce((a, r) => a + Number(r.totalPay || 0), 0);
+            const totalDeduct = rows.reduce((a, r) => a + Number(r.totalDeduct || 0), 0);
+            const totalNet = rows.reduce((a, r) => a + Number(r.netPay || 0), 0);
+            const avgNet = rows.length ? Math.round(totalNet / rows.length) : 0;
+            const deductRate = totalPay > 0 ? ((totalDeduct / totalPay) * 100) : 0;
+            const monthLock = isMonthLocked(month);
+            const topDept = Object.keys(byDept).map((k) => ({ dept: k, ...byDept[k] })).sort((a, b) => b.totalPay - a.totalPay).slice(0, 3);
+            const content = document.getElementById('report-content');
+            if (!content) return;
+            const deptRows = Object.keys(byDept).sort().map((d) => {
+                const x = byDept[d];
+                return `<tr><td class="px-4 py-2">${escapeHtml(d)}</td><td class="px-4 py-2 text-right">${x.count}</td><td class="px-4 py-2 text-right">${x.totalPay.toLocaleString()}</td><td class="px-4 py-2 text-right">${x.totalDeduct.toLocaleString()}</td><td class="px-4 py-2 text-right font-bold text-brand-700">${x.netPay.toLocaleString()}</td></tr>`;
+            }).join('');
+            const topDeptRows = topDept.length
+                ? topDept.map((x, i) => `<tr><td class="px-3 py-2">${i + 1}</td><td class="px-3 py-2">${escapeHtml(x.dept)}</td><td class="px-3 py-2 text-right">${x.totalPay.toLocaleString()}</td></tr>`).join('')
+                : '<tr><td colspan="3" class="px-3 py-6 text-center text-gray-400">데이터 없음</td></tr>';
+            content.innerHTML = `
+                <div id="executive-report" class="max-w-[210mm] mx-auto bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="px-7 py-6 border-b border-slate-200 bg-slate-900 text-white">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.2em] text-slate-300">Executive Payroll Brief</div>
+                                <h4 class="text-2xl font-bold mt-1">${escapeHtml(month)} 인건비 운영 보고서</h4>
+                            </div>
+                            <div class="text-right text-xs text-slate-300">
+                                <div>작성일시</div>
+                                <div class="font-semibold text-white mt-1">${new Date().toLocaleString('ko-KR')}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-7 py-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+                            <div class="p-3 rounded-lg border bg-slate-50"><div class="text-[11px] text-gray-500">대상 인원</div><div class="text-xl font-bold">${rows.length.toLocaleString()} 명</div></div>
+                            <div class="p-3 rounded-lg border bg-slate-50"><div class="text-[11px] text-gray-500">지급총액</div><div class="text-xl font-bold">${totalPay.toLocaleString()} 원</div></div>
+                            <div class="p-3 rounded-lg border bg-slate-50"><div class="text-[11px] text-gray-500">공제율</div><div class="text-xl font-bold">${deductRate.toFixed(1)}%</div></div>
+                            <div class="p-3 rounded-lg border ${monthLock ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}"><div class="text-[11px] text-gray-500">마감 상태</div><div class="text-xl font-bold ${monthLock ? 'text-emerald-700' : 'text-amber-700'}">${monthLock ? '잠금완료' : '미잠금'}</div></div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+                            <div class="lg:col-span-2 border rounded-lg overflow-hidden">
+                                <div class="px-4 py-3 bg-gray-50 border-b text-sm font-bold text-gray-700">부서별 인건비 집계</div>
+                                <table class="min-w-full divide-y divide-gray-100 text-sm">
+                                    <thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left font-bold text-gray-500">부서</th><th class="px-4 py-2 text-right font-bold text-gray-500">인원</th><th class="px-4 py-2 text-right font-bold text-gray-500">지급총액</th><th class="px-4 py-2 text-right font-bold text-gray-500">공제총액</th><th class="px-4 py-2 text-right font-bold text-gray-500">실수령총액</th></tr></thead>
+                                    <tbody class="bg-white divide-y divide-gray-100">${deptRows || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">해당 월 데이터 없음</td></tr>'}</tbody>
+                                </table>
+                            </div>
+                            <div class="border rounded-lg overflow-hidden">
+                                <div class="px-4 py-3 bg-gray-50 border-b text-sm font-bold text-gray-700">지급 상위 부서 TOP 3</div>
+                                <table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left">순위</th><th class="px-3 py-2 text-left">부서</th><th class="px-3 py-2 text-right">지급총액</th></tr></thead><tbody class="divide-y divide-gray-100">${topDeptRows}</tbody></table>
+                                <div class="px-3 py-3 border-t text-xs text-gray-500">1인당 평균 실수령액: <b class="text-gray-700">${avgNet.toLocaleString()} 원</b></div>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg p-4 bg-slate-50">
+                            <div class="text-sm font-bold text-gray-700 mb-2">경영진 코멘트</div>
+                            <ul class="text-xs text-gray-600 space-y-1 list-disc pl-5">
+                                <li>총 지급 대비 공제 비율은 <b>${deductRate.toFixed(1)}%</b>입니다.</li>
+                                <li>마감 상태는 <b>${monthLock ? '잠금완료' : '미잠금'}</b>이며, 미잠금인 경우 마감센터에서 잠금 필요합니다.</li>
+                                <li>정정/재계산 건은 알림센터 및 정정관리 메뉴에서 추적 가능합니다.</li>
+                            </ul>
+                            <div class="mt-6 pt-4 border-t flex justify-end text-xs text-gray-500">승인: ____________________</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        window.printReportCenter = () => {
+            const reportEl = document.getElementById('executive-report');
+            if (!reportEl) return alert("리포트를 먼저 생성하세요.");
+            const w = window.open('', '_blank', 'width=1024,height=768');
+            if (!w) return alert("팝업 차단을 해제해주세요.");
+            const html = `
+                <!doctype html>
+                <html lang="ko">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width,initial-scale=1" />
+                    <title>경영진 인건비 보고서</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <style>
+                        @page { size: A4 portrait; margin: 12mm; }
+                        body { font-family: 'Noto Sans KR', sans-serif; background: #fff; color: #0f172a; }
+                        * { box-sizing: border-box; }
+                        .report-wrap { width: 100%; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #e2e8f0; padding: 6px 8px; font-size: 11px; }
+                        thead th { background: #f8fafc; }
+                    </style>
+                </head>
+                <body>
+                    <div class="report-wrap">${reportEl.outerHTML}</div>
+                    <script>window.onload = () => { setTimeout(() => window.print(), 200); };<\/script>
+                </body>
+                </html>
+            `;
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+        };
+
+        // 10. Dashboard (Restored)
         window.updateDashboard = async () => {
             let recs = [];
             if(isDemoMode) recs = JSON.parse(localStorage.getItem('payroll_history')||'[]');
